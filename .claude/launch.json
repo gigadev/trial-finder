@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "trial-finder-site",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["vendor/agentify-website/scripts/serve_site.mjs", "site", "--port", "8080"],
+      "port": 8080
+    }
+  ]
+}

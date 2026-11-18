@@ -33,14 +33,14 @@ One thing is different from the systems the guides describe: **we do not write t
 | C7 | Every action input has a schema; anything the schema cannot express (an id's shape, lengths, membership in what was fetched) is checked in code before anything happens. Fields the source may not hold are optional, never required. | A 4.3, D 6 | 4, 5 |
 | C8 | Output that fits the schema is not yet trusted: a schema stops malformed output, not wrong output. Code checks it against the record (a quoted criterion must be in the study's criteria text) before it is shown. | A 4.3, A 4.4, D 6 | 5 |
 | C9 | When that check drops items, the action says exactly which and why, so the model can correct them once. It is told not to retry when the record simply does not say; that is "cannot tell". | A 4.4 | 5 |
-| C10 | Every claim about a study carries where it came from: the study id, the quoted criterion, and the record's last-update date. Our code renders these from the record, so they cannot be lost in a summary. | A 5.6 | 3, 5 |
+| C10 | Every claim about a study carries where it came from: the study id, the quoted criterion, and the record's last-update date. Our code renders these from the record, so they cannot be lost in a summary. | A 5.6 | 3 (done for the page, `tests/app.test.mjs`), 5 |
 | C11 | The suggested default model is named exactly (a pinned version, not "latest"), chosen by running the eval set, and changed only after running it again. Model names come from the providers' current lists, never from memory. | D 2, D 5 | 9 |
 
 ## 3. Site actions (the tools)
 
 | Id | Rule | Guide | Built in |
 | --- | --- | --- | --- |
-| T1 | An action is a thin wrapper over the page object and `guard.js`. The page's own buttons call the same functions, so the site works without AI. Site actions, not an MCP server, are the right tool type here: the capability lives in the page, needs no server, and other sites reach it through the network, not through us. | D 8 (agentic customization) | 3, 4 |
+| T1 | An action is a thin wrapper over the page object and `guard.js`. The page's own buttons call the same functions, so the site works without AI. Site actions, not an MCP server, are the right tool type here: the capability lives in the page, needs no server, and other sites reach it through the network, not through us. | D 8 (agentic customization) | 3 (done for the page, `tests/app.test.mjs`), 4 |
 | T2 | **Hard.** Every action declares its effect. No action is `irreversible` (W3). | D 8, A 2.3 | 4, 5 |
 | T3 | A description is how the model chooses a tool, so each says what the action is for, the input it expects with an example, what it returns, the edge cases, and what it does **not** do where another action looks similar. Instructions are reread for wording that could pull the model toward the wrong action. | A 2.1, D 8 | 4, 5 |
 | T4 | **Hard.** A refusal is a fixed block: `ok: false`, a `category` (`validation`, `not_found`, `business`, `transient`), `retryable`, and a plain `reason` the agent can pass on. It changes nothing. An unexpected failure never carries an underlying error's text. Actions return refusals; they do not throw, because the runtime reports a throw as an unknown outcome. | A 2.2 | 4, 5 |
@@ -53,13 +53,13 @@ One thing is different from the systems the guides describe: **we do not write t
 
 | Id | Rule | Guide | Built in |
 | --- | --- | --- | --- |
-| D1 | **Hard.** Nothing about the visitor is stored by our code: no cookies, `localStorage`, `sessionStorage` or IndexedDB for health details, searches or the shortlist. | D 7 (PII, least privilege) | 3 (source check) |
+| D1 | **Hard.** Nothing about the visitor is stored by our code: no cookies, `localStorage`, `sessionStorage` or IndexedDB for health details, searches or the shortlist. | D 7 (PII, least privilege) | 3 (done, `tests/source-checks.test.mjs`) |
 | D2 | **Hard.** The visitor's model key and settings belong to the runtime. Our files never read them and never put them in a URL, an action argument, a request or a log. | D 7 (secrets and keys) | 4 (source check) |
-| D3 | **Hard.** No console output carries what the visitor typed, what the model wrote, or record text. Names, ids, codes and counts only. | D 7 | 3–5 (source check) |
-| D4 | **Hard.** The page loads nothing from a third party: no scripts, fonts, analytics or beacons. The only outside requests are the AI provider (made by the runtime), ClinicalTrials.gov, and a peer after consent. | D 7 | 3, 8 |
+| D3 | **Hard.** No console output carries what the visitor typed, what the model wrote, or record text. Names, ids, codes and counts only. | D 7 | 3 (done for the page and data layer, `tests/source-checks.test.mjs`), 4, 5 |
+| D4 | **Hard.** The page loads nothing from a third party: no scripts, fonts, analytics or beacons. The only outside requests are the AI provider (made by the runtime), ClinicalTrials.gov, and a peer after consent. | D 7 | 3 (done for the page, `tests/source-checks.test.mjs`), 8 |
 | D5 | **Hard.** Requests to ClinicalTrials.gov are plain `GET` with no custom header and no credentials, and always name their fields. | D 7, A 5.1 | 2 (done, `tests/trials-api.test.mjs`) |
-| D6 | Before the first search the visitor is told what is sent where, and the "How the AI works here" page says the same in full. A new feature that sends anything new updates both in the same task. | D 7 | 3, 6 |
-| D7 | The data source, the date the data were processed, and every modification we make are stated on the page, per ClinicalTrials.gov's terms. | A 5.6 | 3, 6 |
+| D6 | Before the first search the visitor is told what is sent where, and the "How the AI works here" page says the same in full. A new feature that sends anything new updates both in the same task. | D 7 | 3 (done for the notice, `tests/app.test.mjs`), 6 |
+| D7 | The data source, the date the data were processed, and every modification we make are stated on the page, per ClinicalTrials.gov's terms. | A 5.6 | 3 (done for the page, `tests/app.test.mjs`), 6 |
 | D8 | A peer receives only what the visitor's question needs; the instructions say not to send age, sex or location unless the visitor asked for exactly that. | D 7 | 7 |
 | D9 | The visitor can see what the agents did: which agent ran, which actions were called, which origins were contacted and what consent was given. Use the runtime's own activity view; it is also how we debug, by reading the trace to see whether a fault is in our action or in the model's choice. | D 4 | 4, 9 |
 | D10 | The visitor pays for the model calls, so we do not waste them: results are trimmed (T7), specialists are called only when needed (C1), and the page says plainly that the conversation runs on their key and their provider's prices. | D 5 | 4, 6 |

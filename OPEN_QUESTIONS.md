@@ -332,6 +332,42 @@ Details and dates are in `docs/CLINICALTRIALS_API.md`.
 - **Order of work.** The module was written before its tests, not after. The tests were
   then checked by breaking the module five ways; each break failed at least one test.
 
+### B14. Task 3: what was settled while building the page
+
+- **The notice is part of the page, not a pop-up.** It appears under the search form
+  with "Continue and search" and "Do not search". Nothing is sent while it waits. It is
+  asked once per page load: nothing is stored, so a reload asks again. "Do not search"
+  is not remembered either; the next search asks again.
+- **The notice names only ClinicalTrials.gov for now.** HANDOFF §8 rule 11 also has it
+  say that the conversation goes to the visitor's AI provider. There is no AI on the
+  page until task 4, and rule D6 says the notice changes in the same task as what is
+  sent. Task 4 adds that sentence.
+- **Opening a study also waits for the notice**, since it too sends a request.
+- **The data date is fetched with the first search**, not when the page loads, so the
+  page contacts no one before the visitor has agreed.
+- **The plain pages are not linked yet.** About, "How the AI works here", "Not medical
+  advice" and "Data" come in task 6. The footer carries the source and
+  not-affiliated lines until then.
+- **Links to ClinicalTrials.gov open in a new tab** and do not pass on our page's
+  address. A link in the same tab would lose the shortlist, which lives only in the
+  page.
+- **A study's contact is shown as text**, never as a mail or phone link. The page says
+  it does not contact anyone for the visitor.
+- **The shortlist holds at most 10 studies**; the visitor's own questions are at most
+  12 lines of 300 characters. These are our numbers; the handoff only says "capped".
+- **The visitor can type their own questions for the sheet** without AI. HANDOFF §4
+  lists a printable sheet; the questions box is the smallest way to make it useful
+  before the agent exists. In task 6 the agent fills the same list.
+- **A study whose record cannot be fetched is named on the sheet as missing**, not
+  dropped silently.
+- **`app.js` loads the page object when the file is imported in a browser** and
+  exports it as `App.page`, as the skill's `site_actions.md` asks. Tests build their
+  own page on the skill's DOM stand-in.
+- **The print layout was not looked at.** The print rules are in `styles.css`; no test
+  or browser check covered how the sheet looks on paper. Scott's review should print one.
+- **`.claude/launch.json` is new.** It lets the build session start the local server
+  in its browser pane. It holds no secret.
+
 ---
 
 ## C. Decisions waiting on Scott
