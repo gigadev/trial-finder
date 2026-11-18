@@ -859,7 +859,10 @@ test("run by another site, Trial Finder's network gets none of this page's tools
     assert.equal([...table.toolByName.keys()].some((name) => name.startsWith("website_")), false, `${agent.name} is offered site tools`);
   }
   // Its first sentence is about all a caller learns, so it names what the site offers.
-  assert.match(net.getAgentSpec("trial_guide").instructions.trim(), /^You are the assistant on the Trial Finder website\. You help patients and caregivers find clinical studies/);
+  assert.match(net.getAgentSpec("trial_guide").instructions.trim(), /^You are the assistant on the Trial Finder website, at http:\/\/localhost:8080\/\. You help patients and caregivers find clinical studies/);
+  // Asked by another site, it has no search; it says so plainly and gives its address
+  // (Scott's live test, Nov 18, 2026: it reported the missing tool as a fault).
+  assert.ok(net.getAgentSpec("trial_guide").instructions.includes("If another site's assistant asks you, you cannot search from there. That is expected, not a fault: say Trial Finder searches public study records on its own site, and give its address."));
 });
 
 // ---------------------------------------------------------------------------------

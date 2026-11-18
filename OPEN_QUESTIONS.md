@@ -584,6 +584,32 @@ Settled while building:
 - **Fernhollow's runtime is a third unchanged copy,** held to the same recorded hashes.
 - **The source checks now cover both sites,** each with its own allow-list of outside
   origins.
+- **Scott's live test, Nov 18, 2026, Fernhollow asking Trial Finder:** the card and the
+  call worked. But Trial Finder's assistant, running in Fernhollow's tab with no search,
+  answered "I couldn't run that search — the study-search tool isn't responding",
+  following the runtime's note to report missing tools rather than the skill's peer
+  rule. Fernhollow passed that on as a failure, though it did give Trial Finder's
+  address. Fixed in the instructions: Trial Finder 0.7.1 has a line for being asked by
+  another site and names its own address in its first sentence; Fernhollow 0.1.1 says
+  what to expect from Trial Finder and to pass it on as an answer. To make room, Trial
+  Finder dropped three short lines it no longer needs. Both addresses change in task 8.
+  Retried: Fernhollow's answer was right. Trial Finder's raw reply still says it is
+  "not able to run a study search right now", which sounds temporary; left for the eval.
+- **The same test, Trial Finder asking Fernhollow:** the card and the call worked, but
+  Fernhollow's assistant, with no page tools when called, tried to call its read tool
+  anyway and wrote the call out as text. Trial Finder rightly said the reply was not an
+  answer and offered its own help. Fixed in Fernhollow 0.1.2: a line for being asked by
+  another site (call nothing; name the pages from its first sentence and its address).
+  Retried: same fault, a tool call written out as text. Version 0.1.3 puts that rule
+  right after the first sentence, before any mention of the tool, and makes the tool
+  line conditional ("when it is in your tool list"). The tool's name must still appear
+  in the skill's partner rules. If the model still writes calls out, this is the
+  model's limit, for the eval in task 9 to settle; Trial Finder already handles it
+  safely, saying the reply was not an answer and inventing nothing.
+  Retried with 0.1.3: Fernhollow answered in plain text with its pages and address, and
+  the card's request held only the condition and the question. Scott then passed every
+  remaining check: declines on both sites, a plain search that contacted no partner,
+  Fernhollow answering from its own page, and declining a medicine question.
 - **Seen, not fixed (task 10):** after a consent card is answered, focus stays on the
   card's title instead of returning to the message box. The skill's template behaves
   the same way in a real browser, where the answered card stays on the page.
