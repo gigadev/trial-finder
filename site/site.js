@@ -28,10 +28,15 @@ export class AssistantMount {
     const siteBase = new URL("./", import.meta.url).href;
     try {
       const { boot } = await importRuntime();
-      await boot("#agent-app", {
+      const booted = await boot("#agent-app", {
         originUrl: siteBase,
         sandboxWorkerUrl: new URL("runtime/sandbox-worker.js", siteBase).href,
       });
+      // The runtime's consent card for a partner site, with focus handled for the visitor.
+      if (booted?.engine && typeof booted.engine.onConsent === "function") {
+        AssistantMount.defaultConsent = booted.engine.onConsent;
+        booted.engine.onConsent = AssistantMount.consent;
+      }
       status.textContent = AssistantMount.STATUS.loaded;
       // Comforts only. If the runtime's chat markup changes, the chat still works as the
       // runtime made it, so a failure here does not count as a failed boot.
@@ -48,6 +53,47 @@ export class AssistantMount {
     }
   }
 }
+
+/**
+ * Ask the visitor, with the runtime's consent card, whether to contact a partner site.
+ * From the skill's templates/site.js: the card is named for screen readers and its title
+ * takes focus while it waits, so a stray Enter answers nothing; then focus goes back to
+ * the chat. The visitor's answer is passed on unchanged.
+ *
+ * :param info: What the card shows: the partner's label and host, and the request.
+ * :return: "allow", "always" or "decline", as the visitor chose.
+ */
+AssistantMount.consent = async (info) => {
+  const answer = AssistantMount.defaultConsent(info);
+  AssistantMount.focusConsentCard();
+  const decision = await answer;
+  AssistantMount.keepFocusInChat();
+  return decision;
+};
+
+/**
+ * Name the newest consent card after its title, and move focus to that title, unless
+ * the visitor is typing in the page's own form: they keep focus and their keystrokes.
+ */
+AssistantMount.focusConsentCard = () => {
+  const cards = document.querySelectorAll("#ns-msgs .ns-consent");
+  const card = cards[cards.length - 1];
+  const title = card ? card.querySelector(".ns-consent-title") : null;
+  if (!title) return;
+  card.setAttribute("role", "group");
+  card.setAttribute("aria-label", title.textContent);
+  const active = document.activeElement;
+  if (active && active !== document.body && !active.closest("#agent-app")) return;
+  title.tabIndex = -1;
+  title.focus();
+};
+
+/** Put focus back in the message box when an answered card left it on the page body. */
+AssistantMount.keepFocusInChat = () => {
+  if (document.activeElement === document.body || document.activeElement === null) {
+    (document.querySelector("#assistant-message") ?? document.querySelector("#ns-input"))?.focus();
+  }
+};
 
 /**
  * Ask the browser not to offer saved logins or past entries in the runtime's chat box.

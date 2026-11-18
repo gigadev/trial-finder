@@ -4,8 +4,14 @@
     {
       "name": "trial-finder-site",
       "runtimeExecutable": "node",
-      "runtimeArgs": ["vendor/agentify-website/scripts/serve_site.mjs", "site", "--port", "8080"],
+      "runtimeArgs": ["vendor/agentify-website/scripts/serve_site.mjs", "site", "--port", "8080", "--open-as", "localhost"],
       "port": 8080
+    },
+    {
+      "name": "fernhollow-partner",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["vendor/agentify-website/scripts/serve_site.mjs", "partner", "--port", "8091", "--open-as", "127.0.0.1"],
+      "port": 8091
     }
   ]
 }

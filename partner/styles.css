@@ -1,0 +1,569 @@
+/* Trial Finder. No fonts, images or anything else from another site. */
+
+:root {
+  --ink: #1b2430;
+  --ink-soft: #46515f;
+  --paper: #ffffff;
+  --page: #f3f5f7;
+  --line: #c3cad3;
+  --brand: #2f5d34;
+  --brand-dark: #1f4223;
+  --warn-bg: #fff4d6;
+  --warn-line: #8a6100;
+  --error: #9b1c1c;
+  --focus: #b3470b;
+  --measure: 46rem;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--ink);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 1.0625rem;
+  line-height: 1.55;
+}
+
+h1, h2, h3, h4 {
+  line-height: 1.25;
+  margin: 0 0 0.5rem;
+}
+
+h1 { font-size: 1.75rem; }
+h2 { font-size: 1.4rem; }
+h3 { font-size: 1.15rem; }
+h4 { font-size: 1rem; margin-top: 1rem; }
+
+p {
+  margin: 0 0 0.75rem;
+}
+
+a {
+  color: var(--brand);
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+.skip-link {
+  position: absolute;
+  left: 0.5rem;
+  top: -4rem;
+  background: var(--paper);
+  padding: 0.5rem 0.75rem;
+  border: 2px solid var(--brand);
+  z-index: 10;
+}
+
+.skip-link:focus {
+  top: 0.5rem;
+}
+
+.emergency {
+  margin: 0;
+  padding: 0.5rem 1rem;
+  background: var(--ink);
+  color: #ffffff;
+  text-align: center;
+  font-weight: 600;
+}
+
+.site-header,
+main,
+.site-footer {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.site-header {
+  padding-top: 1.25rem;
+  padding-bottom: 0.25rem;
+}
+
+.site-name {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--brand-dark);
+  margin: 0;
+}
+
+.site-tagline {
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+.panel {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin: 1rem 0;
+}
+
+.not-advice {
+  border-left: 4px solid var(--brand);
+  padding: 0.5rem 0.75rem;
+  background: #eef5ee;
+}
+
+.field {
+  margin-bottom: 1rem;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.optional {
+  font-weight: 400;
+  color: var(--ink-soft);
+}
+
+.hint {
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+  margin: 0.25rem 0 0;
+}
+
+input[type="text"],
+select,
+textarea {
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid #6b7684;
+  border-radius: 6px;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.check input {
+  width: 1.4rem;
+  height: 1.4rem;
+  flex: none;
+}
+
+.check label {
+  margin: 0;
+  font-weight: 400;
+}
+
+button {
+  min-height: 2.75rem;
+  padding: 0.5rem 1rem;
+  border: 2px solid var(--brand);
+  border-radius: 6px;
+  background: var(--paper);
+  color: var(--brand-dark);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #e6f0e6;
+}
+
+button.primary {
+  background: var(--brand);
+  color: #ffffff;
+}
+
+button.primary:hover {
+  background: var(--brand-dark);
+}
+
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 0.75rem 0;
+}
+
+.error {
+  color: var(--error);
+  font-weight: 600;
+}
+
+.status {
+  color: var(--ink-soft);
+  min-height: 1.5rem;
+  margin: 0.75rem 0 0;
+}
+
+.notice,
+.site-warning {
+  background: var(--warn-bg);
+  border: 1px solid var(--warn-line);
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+}
+
+.notice {
+  margin-top: 1rem;
+}
+
+.card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1rem 0;
+}
+
+.study-id {
+  color: var(--ink-soft);
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  margin-bottom: 0.5rem;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.2rem 1rem;
+  margin: 0 0 0.75rem;
+}
+
+.facts dt {
+  font-weight: 600;
+}
+
+.facts dd {
+  margin: 0;
+}
+
+.sites ul,
+.contacts ul,
+.questions ol {
+  margin: 0.25rem 0 0.75rem;
+  padding-left: 1.4rem;
+}
+
+.criteria {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: inherit;
+  background: #f6f7f9;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0.75rem;
+  margin: 0.5rem 0 0.75rem;
+}
+
+.source {
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+  margin: 0.5rem 0 0;
+}
+
+#shortlist-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 0.75rem;
+}
+
+.shortlist-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.site-footer {
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+  padding-top: 0.5rem;
+  padding-bottom: 2rem;
+}
+
+@media (max-width: 30rem) {
+  body { font-size: 1rem; }
+  .panel { padding: 1rem; }
+  .field-row { grid-template-columns: 1fr; gap: 0; }
+  .facts { grid-template-columns: 1fr; }
+  .facts dd { margin-bottom: 0.4rem; }
+  .button-row button { width: 100%; }
+}
+
+@media print {
+  body { background: #ffffff; font-size: 11pt; }
+  body > *:not(main),
+  main > *:not(#sheet),
+  .no-print { display: none !important; }
+  main, .panel { max-width: none; margin: 0; padding: 0; border: 0; }
+  .card { break-inside: avoid-page; }
+  .criteria { background: #ffffff; }
+  a { color: inherit; }
+}
+
+/* ------------------------------------------------------------------------------
+   The assistant. Adapted from the skill's templates/assistant.css, with this site's
+   colours. White text sits on --ns-primary and --ns-accent (8.7:1).
+   ------------------------------------------------------------------------------ */
+
+.assistant-note {
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+}
+
+#agent-app {
+  --ns-font: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --ns-bg: #ffffff;
+  --ns-fg: #1b2430;
+  --ns-primary: #2f5d34;
+  --ns-accent: #2f5d34;
+  --ns-border: #c3cad3;
+  --ns-panelbg: #ffffff;
+  --ns-msgbg: #f3f5f7;
+  --ns-muted: #46515f;
+}
+
+/* Set the height once the runtime has mounted the chat, so a failed load leaves no
+   empty box. */
+#agent-app.ns-composed-app [data-ns-slot="chat"] { height: 560px; margin-top: 0.5rem; }
+
+/* "Agents working for you" as one slim row above the chat. It lists the sites taking
+   part, with a dot for each one's state; the chat then uses the full width. */
+#agent-app [data-ns-slot="agents"] { margin-top: 0.75rem; }
+#agent-app [data-ns-slot="agents"] > .ns-agents {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.75rem;
+  padding: 0.4rem 0.75rem;
+  height: auto;
+  overflow: visible;
+}
+#agent-app [data-ns-slot="agents"] > .ns-agents h3 { font-size: 0.75rem; }
+#agent-app #ns-anodes { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+#agent-app #ns-anodes > * { margin: 0; }
+/* With Developer on, the same slot shows the execution log. Keep it a scrolling box. */
+#agent-app [data-ns-slot="agents"] > .ns-dev { max-height: 360px; overflow: auto; }
+
+/* The multi-line message box that site.js puts in front of the runtime's one-line box. */
+#agent-app #assistant-message {
+  flex: 1 1 100%;
+  width: 100%;
+  min-height: 4.5rem;
+  max-height: 12rem;
+  resize: vertical;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid #6b7684;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1.4;
+}
+#agent-app .ns-inputbar { align-items: flex-start; }
+#agent-app .ns-inputbar #ns-input[hidden] { display: none; }
+#agent-app .ns-chat { background: var(--ns-bg); }
+
+/* This site's form and button rules would stretch or restyle the runtime's controls. */
+#agent-app input[type="checkbox"],
+#agent-app input[type="radio"] { width: auto; min-height: 0; }
+#agent-app input[type="text"],
+#agent-app input[type="password"],
+#agent-app select,
+#agent-app textarea { min-height: 0; }
+#agent-app .ns-header { flex-wrap: wrap; }
+#agent-app .ns-settings-body label { margin: 4px 0; font-weight: 400; }
+#agent-app label { display: revert; }
+#agent-app button { margin: 0; min-height: 0; font-weight: inherit; }
+#agent-app button:hover { background: revert-layer; }
+#agent-app .ns-devtoggle:not(.on):hover,
+#agent-app .ns-modal-close:hover { background: transparent; }
+#agent-app .ns-msg { overflow-wrap: break-word; }
+#agent-app .ns-consent { background: #fffbeb; }
+#agent-app .ns-msgs:has(.ns-consent-actions) > .ns-turn-status { display: none; }
+#agent-app .ns-consent-actions { flex-wrap: wrap; }
+#agent-app .ns-consent-actions button { white-space: nowrap; }
+
+/* The runtime adds its confirmation dialog to <body>, outside #agent-app. */
+body > dialog h2 { margin: 0 0 12px; font: 700 1.25em system-ui, sans-serif; }
+body > dialog button { margin-right: 8px; }
+
+@media print {
+  #assistant { display: none !important; }
+}
+
+/* The runtime's agent dialog scrolls as one card. Keep its close button and title at
+   the top while the instructions scroll beneath them. */
+#agent-app .ns-modal-card { padding-top: 0; }
+#agent-app .ns-modal-card > .ns-modal-close {
+  position: sticky;
+  top: 0.75rem;
+  float: right;
+  z-index: 3;
+  width: 2.25rem;
+  height: 2.25rem;
+  margin: 0.75rem 0 0 0.5rem;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #46515f;
+}
+#agent-app .ns-modal-card > .ns-modal-close:hover { background: #e6f0e6; }
+#agent-app .ns-modal-card > h4 {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  margin: 0;
+  padding: 18px 3rem 4px 0;
+  line-height: 24px;
+  background: #ffffff;
+}
+#agent-app .ns-modal-card > h4 + .ns-mrole {
+  position: sticky;
+  top: 46px;
+  z-index: 2;
+  margin: 0;
+  padding: 0 0 10px;
+  background: #ffffff;
+  border-bottom: 1px solid #c3cad3;
+}
+
+/* The menu at the top. It stays in view while the page scrolls. */
+.page-menu {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+  box-shadow: 0 2px 6px rgba(27, 36, 48, 0.08);
+}
+#jump-list {
+  display: flex;
+  gap: 0.25rem 1.25rem;
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: 0 1rem;
+  list-style: none;
+  flex-wrap: wrap;
+}
+#jump-list a,
+.back-link {
+  display: inline-block;
+  padding: 0.6rem 0;
+  font-weight: 600;
+}
+/* Headings the menu jumps to stop below the menu, not under it. */
+h1[id], h2[id] { scroll-margin-top: 5.5rem; }
+/* On a phone the menu is one row that scrolls sideways, so it stays short. */
+@media (max-width: 30rem) {
+  #jump-list { flex-wrap: nowrap; overflow-x: auto; white-space: nowrap; scrollbar-width: thin; }
+  h1[id], h2[id] { scroll-margin-top: 3.5rem; }
+}
+.button-row .back-link { align-self: center; }
+@media print {
+  .page-menu, .back-link { display: none !important; }
+}
+
+/* Notes on the criteria, written by the AI and checked by code. */
+.notes {
+  border: 2px solid var(--warn-line);
+  border-radius: 8px;
+  background: var(--warn-bg);
+  padding: 0.75rem 1rem;
+  margin: 1rem 0;
+}
+.notes h4 { margin-top: 0; }
+.notes-disclaimer { font-weight: 600; }
+.notes-facts p { margin-bottom: 0.25rem; }
+.notes-facts ul { margin: 0 0 0.75rem; padding-left: 1.4rem; }
+.notes-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--paper);
+  font-size: 0.95rem;
+}
+.notes-table th,
+.notes-table td {
+  border: 1px solid var(--line);
+  padding: 0.4rem 0.5rem;
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+.notes-table td:nth-child(2) { font-weight: 600; white-space: nowrap; }
+@media (max-width: 30rem) {
+  .notes-table, .notes-table tbody, .notes-table tr, .notes-table td { display: block; width: 100%; }
+  .notes-table thead { display: none; }
+  .notes-table tr { border: 1px solid var(--line); margin-bottom: 0.5rem; }
+  .notes-table td { border: 0; }
+  .notes-table td:nth-child(2) { white-space: normal; }
+}
+
+/* The sheet: points to ask about, and the remove buttons beside added questions. */
+.cannot-tell {
+  border-left: 4px solid var(--warn-line);
+  background: var(--warn-bg);
+  padding: 0.5rem 0.75rem;
+  margin: 0.5rem 0 0.75rem;
+}
+.cannot-tell h4 { margin-top: 0; }
+.cannot-tell ul { margin: 0.25rem 0 0; padding-left: 1.4rem; }
+.added-question { margin-bottom: 0.35rem; }
+.added-question span { margin-right: 0.5rem; }
+button.small { min-height: 2rem; padding: 0.15rem 0.6rem; font-size: 0.9rem; }
+
+/* The plain pages. */
+.site-name a { color: inherit; text-decoration: none; }
+.site-name a:hover { text-decoration: underline; }
+.page-menu a[aria-current="page"] { color: var(--ink); text-decoration: none; border-bottom: 3px solid var(--brand); }
+.prose h2 { margin-top: 1.5rem; }
+.prose h3 { margin-top: 1.25rem; }
+.prose ul { padding-left: 1.4rem; }
+.prose li { margin-bottom: 0.35rem; }
+.plain-table { width: 100%; border-collapse: collapse; margin: 0.5rem 0 1rem; font-size: 0.95rem; }
+.plain-table th, .plain-table td { border: 1px solid var(--line); padding: 0.45rem 0.55rem; text-align: left; vertical-align: top; }
+.plain-table th { background: #eef5ee; }
+.footer-links { display: flex; flex-wrap: wrap; gap: 0.25rem 1.25rem; margin: 0.5rem 0 0; padding: 0; list-style: none; }
+@media (max-width: 30rem) {
+  .plain-table, .plain-table tbody, .plain-table tr, .plain-table td { display: block; width: 100%; }
+  .plain-table thead { display: none; }
+  .plain-table tr { border: 1px solid var(--line); margin-bottom: 0.5rem; }
+  .plain-table td { border: 0; }
+  .plain-table td:first-child { font-weight: 600; }
+}
+
+/* Fernhollow only: the demonstration banner. */
+.demo-banner {
+  margin: 0;
+  padding: 0.4rem 1rem;
+  background: #fff4d6;
+  border-bottom: 1px solid #8a6100;
+  text-align: center;
+  font-weight: 600;
+}
+main > .not-advice { margin-top: 1rem; }

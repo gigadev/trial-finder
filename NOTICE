@@ -14,6 +14,7 @@ This repository includes software from other projects.
    Copied unchanged to:
      vendor/agentify-website/   the whole skill; a development tool, never deployed
      site/runtime/              the runtime the site serves
+     partner/runtime/           the runtime the partner site serves
 
    The runtime is that project's edited copy of the nsdeploy browser runtime
    (https://github.com/cognizant-ai-lab/nsdeploy, Apache License 2.0) at nsdeploy
