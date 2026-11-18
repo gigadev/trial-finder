@@ -1,0 +1,14 @@
+{
+ "name": "search-bad-token",
+ "recorded": "2026-11-18",
+ "input": {
+  "condition": "asthma",
+  "place": "Idaho",
+  "recruitingOnly": false,
+  "pageToken": "abc"
+ },
+ "url": "https://clinicaltrials.gov/api/v2/studies?query.cond=asthma&query.locn=Idaho&fields=NCTId%2CBriefTitle%2COverallStatus%2CPhase%2CCondition%2CMinimumAge%2CMaximumAge%2CSex%2CLastUpdatePostDate%2CLocationFacility%2CLocationStatus%2CLocationCity%2CLocationState%2CLocationZip%2CLocationCountry%2CLocationGeoPoint&sort=%40relevance&pageSize=10&countTotal=true&pageToken=abc",
+ "status": 400,
+ "contentType": "text/plain; charset=UTF-8",
+ "body": "Incorrect pageToken format"
+}
