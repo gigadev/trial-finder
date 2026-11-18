@@ -1,0 +1,12 @@
+node_modules/
+*.log
+requests.jsonl
+
+# Keys and local settings never go in the repository.
+.env
+.env.*
+key.env
+.claude/settings.local.json
+
+.DS_Store
+Thumbs.db

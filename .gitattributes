@@ -1,0 +1,11 @@
+# Text files are stored and checked out with LF line endings on every machine.
+* text=auto eol=lf
+
+# Copied from other projects and never edited. Do not convert a single byte:
+# a test compares these files with hashes recorded when they were copied.
+vendor/** -text
+site/runtime/** -text
+partner/runtime/** -text
+
+# Recorded answers from the public data source are kept exactly as received.
+tests/fixtures/** -text

@@ -1,0 +1,22 @@
+Trial Finder
+Copyright 2026 Scott Shepherd
+
+Licensed under the Apache License, Version 2.0. See LICENSE.
+
+This repository includes software from other projects.
+
+1. The agentify-website skill and its browser runtime
+   Source:  https://github.com/cognizant-ai-labs/agentic-web
+   Path:    skills/agentify-website
+   Commit:  47cce0fe8790c8e911b5924bcb500a00e0382004 (2026-11-17)
+   License: Apache License 2.0 (the repository's LICENSE; the runtime's own copy is
+            site/runtime/LICENSE.txt)
+   Copied unchanged to:
+     vendor/agentify-website/   the whole skill; a development tool, never deployed
+     site/runtime/              the runtime the site serves
+
+   The runtime is that project's edited copy of the nsdeploy browser runtime
+   (https://github.com/cognizant-ai-lab/nsdeploy, Apache License 2.0) at nsdeploy
+   commit 53a787c. Its README, site/runtime/README.md, lists the edits. This
+   repository makes no further change to it. tests/scaffold.test.mjs fails if any
+   copied file differs from the hashes in tests/fixtures/agentify-website.sha256.json.

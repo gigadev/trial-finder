@@ -1,0 +1,24 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      # No install step: the site and its tests have no dependencies.
+      - name: Unit, scripted-model and source-check tests
+        run: node --test "tests/*.test.mjs"
+      # Task 4 adds the conformance check (build_network.mjs --check) here.
+      # Task 7 adds check_partner.mjs in both directions.
+      # The eval is run by hand with a real key and never runs here.
