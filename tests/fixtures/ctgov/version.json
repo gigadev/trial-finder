@@ -1,0 +1,9 @@
+{
+ "name": "version",
+ "recorded": "2026-11-18",
+ "input": {},
+ "url": "https://clinicaltrials.gov/api/v2/version",
+ "status": 200,
+ "contentType": "application/json",
+ "body": "{\n  \"apiVersion\" : \"2.0.5\",\n  \"dataTimestamp\" : \"2026-11-18T10:00:05\"\n}"
+}

@@ -1,0 +1,11 @@
+{
+ "name": "study-unknown",
+ "recorded": "2026-11-18",
+ "input": {
+  "id": "NCT99999999"
+ },
+ "url": "https://clinicaltrials.gov/api/v2/studies/NCT99999999?fields=NCTId%2CBriefTitle%2COverallStatus%2CPhase%2CCondition%2CMinimumAge%2CMaximumAge%2CSex%2CLastUpdatePostDate%2CLocationFacility%2CLocationStatus%2CLocationCity%2CLocationState%2CLocationZip%2CLocationCountry%2CLocationGeoPoint%2CBriefSummary%2CEligibilityCriteria%2CHealthyVolunteers%2CCentralContactName%2CCentralContactRole%2CCentralContactPhone%2CCentralContactPhoneExt%2CCentralContactEMail",
+ "status": 404,
+ "contentType": "text/plain; charset=UTF-8",
+ "body": "NCT number NCT99999999 not found"
+}

@@ -44,9 +44,9 @@ One thing is different from the systems the guides describe: **we do not write t
 | T2 | **Hard.** Every action declares its effect. No action is `irreversible` (W3). | D 8, A 2.3 | 4, 5 |
 | T3 | A description is how the model chooses a tool, so each says what the action is for, the input it expects with an example, what it returns, the edge cases, and what it does **not** do where another action looks similar. Instructions are reread for wording that could pull the model toward the wrong action. | A 2.1, D 8 | 4, 5 |
 | T4 | **Hard.** A refusal is a fixed block: `ok: false`, a `category` (`validation`, `not_found`, `business`, `transient`), `retryable`, and a plain `reason` the agent can pass on. It changes nothing. An unexpected failure never carries an underlying error's text. Actions return refusals; they do not throw, because the runtime reports a throw as an unknown outcome. | A 2.2 | 4, 5 |
-| T5 | "Nothing matches" is a successful result that says so. "The data source did not answer" is a `transient` refusal. They are never confused, and an empty list is never returned in place of a failure. | A 2.2, A 5.3 | 2, 4 |
+| T5 | "Nothing matches" is a successful result that says so. "The data source did not answer" is a `transient` refusal. They are never confused, and an empty list is never returned in place of a failure. | A 2.2, A 5.3 | 2 (done for the data layer, `tests/trials-api.test.mjs`), 4 |
 | T6 | A specialist that fails tells the front agent what it tried and what it did get, and the front agent tells the visitor what is missing instead of presenting a partial answer as whole. One failed step does not end the conversation. | A 5.3 | 5, 6 |
-| T7 | Results put what the agent needs first and are bounded: at most 10 studies, 5 sites each, a fixed list of fields, well under the runtime's size cap. Long records are trimmed by code before the model sees them, with the key facts first. | A 5.1, D 6 | 2, 4 |
+| T7 | Results put what the agent needs first and are bounded: at most 10 studies, 5 sites each, a fixed list of fields, well under the runtime's size cap. Long records are trimmed by code before the model sees them, with the key facts first. | A 5.1, D 6 | 2 (done for the data layer, `tests/trials-api.test.mjs`), 4 |
 | T8 | **Hard.** Text written by someone else (every free-text field of a study record; every partner reply) is labelled untrusted in the result. A hostile-record test keeps it so. | D 7 | 4, 5 |
 
 ## 4. Data, privacy and logs
@@ -57,7 +57,7 @@ One thing is different from the systems the guides describe: **we do not write t
 | D2 | **Hard.** The visitor's model key and settings belong to the runtime. Our files never read them and never put them in a URL, an action argument, a request or a log. | D 7 (secrets and keys) | 4 (source check) |
 | D3 | **Hard.** No console output carries what the visitor typed, what the model wrote, or record text. Names, ids, codes and counts only. | D 7 | 3–5 (source check) |
 | D4 | **Hard.** The page loads nothing from a third party: no scripts, fonts, analytics or beacons. The only outside requests are the AI provider (made by the runtime), ClinicalTrials.gov, and a peer after consent. | D 7 | 3, 8 |
-| D5 | **Hard.** Requests to ClinicalTrials.gov are plain `GET` with no custom header and no credentials, and always name their fields. | D 7, A 5.1 | 2 |
+| D5 | **Hard.** Requests to ClinicalTrials.gov are plain `GET` with no custom header and no credentials, and always name their fields. | D 7, A 5.1 | 2 (done, `tests/trials-api.test.mjs`) |
 | D6 | Before the first search the visitor is told what is sent where, and the "How the AI works here" page says the same in full. A new feature that sends anything new updates both in the same task. | D 7 | 3, 6 |
 | D7 | The data source, the date the data were processed, and every modification we make are stated on the page, per ClinicalTrials.gov's terms. | A 5.6 | 3, 6 |
 | D8 | A peer receives only what the visitor's question needs; the instructions say not to send age, sex or location unless the visitor asked for exactly that. | D 7 | 7 |

@@ -296,6 +296,42 @@ is opened could not be seen from inside the session: opening `tests/scaffold.tes
 showed no sign either way. The rules were read in full at the start instead. Re-check
 when task 2 opens `site/trials-api.js`.
 
+### B13. Task 2: what the live data source showed, and what was settled
+
+Details and dates are in `docs/CLINICALTRIALS_API.md`.
+
+- **A malformed id is not always refused by the data source.** HANDOFF §5 expected 400.
+  `NCT123` returned another study, `NCT00000123`. So the shape check is ours and runs
+  before any request; a test keeps it.
+- **The documented age filter drops studies with no upper age limit.** The site adds
+  "or the limit is missing" to both ends. This replaces the expression in A6.
+- **Order of sites uses coordinates from the record, not only text.** A6 said sites
+  would be ordered by matching city and state text. When a study lists any site in the
+  visitor's city, that site's own coordinates stand for the place, and recruiting sites
+  are ordered by straight-line distance from it. No geocoding service is used, so
+  HANDOFF §4 still holds. `data.html` must say this, and that the miles are straight
+  lines between listed sites, not travel distance.
+- **A condition is required; a place is optional.** Chosen so a search always has a
+  subject. A search with no place shows sites in the record's own order.
+- **Typed text is stripped of brackets, parentheses and quotes** before it goes in a
+  request, because the data source reads them as search syntax.
+- **A request is given up after 15 seconds** and reported as "did not answer". The
+  request itself is not cancelled: cancelling needs an options object, and the rule is
+  one argument to `fetch`.
+- **Only the study's central contacts are fetched**, at most 3, never each site's
+  contacts. Fewer personal details pass through the page.
+- **"Recruiting" for a site means the site's own status is `RECRUITING`.**
+  `NOT_YET_RECRUITING` sites are not shown as places to go. Sites in the visitor's city
+  that are not recruiting are named with their status, at most 3.
+- **Labelling record text as untrusted (T8) is not done in `trials-api.js`.** It
+  returns plain data for the page. The actions add the labels in task 4, as the
+  standards' "Built in" column says.
+- **The fixtures are about 0.7 MB**, because two recorded pages hold studies with
+  hundreds of sites. They are public study records. One holds a sponsor's public
+  information line as the study's contact; no private person's details.
+- **Order of work.** The module was written before its tests, not after. The tests were
+  then checked by breaking the module five ways; each break failed at least one test.
+
 ---
 
 ## C. Decisions waiting on Scott
