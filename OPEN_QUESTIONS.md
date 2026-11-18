@@ -281,6 +281,21 @@ Git on this machine checks text files out with Windows line endings. That would 
 the copied runtime's bytes. `.gitattributes` marks `vendor/` and `site/runtime/` as
 "do not convert", and everything else as LF.
 
+### B11. Task 1 landed in the first commit, not in its own pull request
+
+The repository's first commit (`2473cde`) holds the handoff files and all of task 1
+together, on `main`. HANDOFF §13 asks for one task per pull request. Nothing is lost,
+since there was no earlier history to review against. Task 2 onward goes on a branch
+and a pull request each.
+
+### B12. Path-scoped rules: loading not confirmed
+
+`/task-done` loads and the deny rules refuse git writes (checked by trying
+`git add --dry-run .`). Whether the files in `.claude/rules/` load when a matching file
+is opened could not be seen from inside the session: opening `tests/scaffold.test.mjs`
+showed no sign either way. The rules were read in full at the start instead. Re-check
+when task 2 opens `site/trials-api.js`.
+
 ---
 
 ## C. Decisions waiting on Scott
