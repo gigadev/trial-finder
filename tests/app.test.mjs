@@ -251,7 +251,7 @@ test("T5 on the page: nothing matches and did-not-answer read differently", asyn
   const nothing = await page.searchStudies(FIXTURES["search-nothing"].input);
   assert.equal(nothing.ok, true);
   assert.equal(node("results").hidden, false);
-  assert.equal(node("results-summary").textContent, WORDING.nothingMatches);
+  assert.equal(node("results-summary").textContent, `Searched for "zzqxqzz notacondition" in "Boise". ${WORDING.nothingMatches}`);
   assert.equal(node("results-list").children.length, 0);
   assert.equal(node("search-error").hidden, true);
 
@@ -533,14 +533,57 @@ test("a slow earlier search does not overwrite a later one", async () => {
   assert.deepEqual(page.getState().results.studies.map((study) => study.id), (await fast).studies.map((study) => study.id));
 });
 
+test("the menu at the top always has search, the assistant and the shortlist, and adds what is showing", async () => {
+  const { page, node } = await readyPage();
+  const jumps = () => node("jump-list").querySelectorAll("a").map((a) => [a.getAttribute("href"), a.textContent]);
+  const SEARCH = ["#search-heading", "Search"];
+  const ASSISTANT = ["#assistant-heading", "Assistant"];
+  assert.equal(node("jump-links").hidden, false, "the menu is always there");
+  assert.deepEqual(jumps(), [SEARCH, ASSISTANT, ["#shortlist-heading", "Shortlist"]]);
+
+  const result = await page.searchStudies(ASTHMA);
+  const FOUND = ["#results-heading", `Studies (${result.studies.length})`];
+  assert.deepEqual(jumps(), [SEARCH, ASSISTANT, FOUND, ["#shortlist-heading", "Shortlist"]]);
+
+  await page.openStudy(STUDY_ID);
+  page.updateShortlist(STUDY_ID, "add");
+  await page.buildSheet();
+  assert.deepEqual(jumps(), [
+    SEARCH,
+    ASSISTANT,
+    FOUND,
+    ["#study-heading", `Study ${STUDY_ID}`],
+    ["#shortlist-heading", "Shortlist (1)"],
+    ["#sheet-heading", "Sheet for the doctor"],
+  ]);
+
+  page.closeStudy();
+  page.closeSheet();
+  page.updateShortlist(STUDY_ID, "remove");
+  assert.deepEqual(jumps(), [SEARCH, ASSISTANT, FOUND, ["#shortlist-heading", "Shortlist"]]);
+
+  await page.searchStudies(FIXTURES["search-nothing"].input);
+  assert.deepEqual(jumps()[2], ["#results-heading", "Studies (none)"]);
+
+  // Every place the menu goes is a heading that can take focus.
+  for (const id of ["search-heading", "assistant-heading", "results-heading", "study-heading", "shortlist-heading", "sheet-heading"]) {
+    assert.match(HTML, new RegExp(`id="${id}" tabindex="-1"`), `#${id} must take focus`);
+  }
+  assert.ok(HTML.indexOf('class="page-menu"') < HTML.indexOf("<main"), "the menu sits above the page's content");
+  for (const id of ["results", "study"]) {
+    const at = HTML.indexOf(`id="${id}"`);
+    assert.ok(HTML.slice(at, HTML.indexOf("</section>", at)).includes('href="#assistant-heading"'), `#${id} links back to the assistant`);
+  }
+});
+
 // ---------------------------------------------------------------------------------
 // Fixed wording
 // ---------------------------------------------------------------------------------
 
 test("fixed wording: the not-advice line is on every result view and the sheet; the emergency line is in the page", () => {
   const count = HTML.split(WORDING.notAdvice).length - 1;
-  assert.equal(count, 4, "search panel, results, study details and sheet each carry the line");
-  for (const id of ["results", "study", "sheet"]) {
+  assert.equal(count, 5, "search panel, assistant, results, study details and sheet each carry the line");
+  for (const id of ["assistant", "results", "study", "sheet"]) {
     const start = HTML.indexOf(`id="${id}"`);
     const end = HTML.indexOf("</section>", start);
     assert.ok(HTML.slice(start, end).includes(WORDING.notAdvice), `#${id} must carry the not-advice line`);

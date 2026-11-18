@@ -112,6 +112,26 @@ function searchWords(value) {
   return String(value).replace(/[[\]()"\\]/g, " ").replace(/\s+/g, " ").trim();
 }
 
+/** Words that describe nearness, not a place. The data source needs every place word to match. */
+const NOT_PLACE_WORDS = new Set(["near", "nearby", "around", "close", "closest", "to", "area", "me", "my", "from", "within", "about"]);
+
+/**
+ * Turn the place as typed into the words the data source can match.
+ *
+ * The location search needs every word to match a site's address, so "near Boise, Idaho"
+ * or "Boise Idaho USA" finds nothing while "Boise, Idaho" finds studies (checked Nov 18,
+ * 2026, docs/CLINICALTRIALS_API.md). Words about nearness and distances are dropped, a
+ * leading "in" or "the" is dropped, and the U.S. is named as the records name it.
+ */
+export function placeWords(value) {
+  let text = searchWords(value ?? "");
+  text = text.replace(/\b\d+(\.\d+)?\s*(miles?|mi|km|kilometers?|kilometres?)\b(\s+of\b)?/gi, " ");
+  text = text.replace(/\b(U\.?S\.?A\.?|U\.S\.|US|United States of America|America)(?=$|[\s,])/g, "United States");
+  const words = text.split(" ").filter((word) => !NOT_PLACE_WORDS.has(word.toLowerCase().replace(/,$/, "")));
+  while (words.length && /^(in|the|of),?$/i.test(words[0])) words.shift();
+  return words.join(" ").replace(/\s+,/g, ",").replace(/^,|,$/g, "").trim();
+}
+
 function isBlank(value) {
   return value === undefined || value === null || value === "";
 }
@@ -131,7 +151,7 @@ function checkSearch(input) {
     if (typeof request.place !== "string" || request.place.length > MAX_PLACE_LENGTH) {
       return { refusal: refuse("validation", false, REASONS.place) };
     }
-    place = searchWords(request.place);
+    place = placeWords(request.place);
   }
   let age = null;
   if (!isBlank(request.age)) {
@@ -285,7 +305,7 @@ function siteView(site, match, miles) {
  */
 export function selectSites(locations, place) {
   const all = Array.isArray(locations) ? locations.filter((site) => site && typeof site === "object") : [];
-  const placeLower = searchWords(place ?? "").toLowerCase();
+  const placeLower = placeWords(place).toLowerCase();
   const ranked = all.map((site, index) => ({ site, index, miles: NaN, ...matchPlace(site, placeLower) }));
   const anchor = ranked.find((entry) => entry.match === "city" && hasPoint(entry.site));
   if (anchor) {
@@ -408,6 +428,7 @@ export async function searchTrials(input, options) {
     total: Number.isInteger(data.totalCount) ? data.totalCount : null,
     studies,
     nextPageToken: typeof data.nextPageToken === "string" ? data.nextPageToken : null,
+    searched: { condition: checked.value.condition, place: checked.value.place },
     source: SOURCE_NAME,
   };
 }

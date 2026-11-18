@@ -27,6 +27,7 @@ import {
   getDataDate,
   getTrial,
   isNctId,
+  placeWords,
   searchTrials,
   selectSites,
 } from "../site/trials-api.js";
@@ -422,8 +423,38 @@ test("T5: nothing matches is a successful result that says so", async () => {
     total: 0,
     studies: [],
     nextPageToken: null,
+    searched: { condition: "zzqxqzz notacondition", place: "Boise" },
     source: "ClinicalTrials.gov",
   });
+});
+
+test("the place is cut to the words a site's address can match", () => {
+  // Checked against the live data source on Nov 18, 2026: each of these found the same 3
+  // Boise studies as "Boise, Idaho"; before cleaning, "near Boise, Idaho" and
+  // "Boise Idaho USA" found none.
+  const cases = {
+    "Boise, Idaho": "Boise, Idaho",
+    "near Boise, Idaho": "Boise, Idaho",
+    "Boise Idaho USA": "Boise Idaho United States",
+    "in Boise, ID": "Boise, ID",
+    "around Boise": "Boise",
+    "within 50 miles of Boise, Idaho": "Boise, Idaho",
+    "Boise, Idaho, U.S.": "Boise, Idaho, United States",
+    "close to me in Boise": "Boise",
+    "the Boise area": "Boise",
+    // Place names that contain such words keep them.
+    "Salt Lake City, Utah": "Salt Lake City, Utah",
+    "District of Columbia": "District of Columbia",
+    "Toronto, Canada": "Toronto, Canada",
+    "83706": "83706",
+    "": "",
+  };
+  for (const [typed, expected] of Object.entries(cases)) {
+    assert.equal(placeWords(typed), expected, `place ${JSON.stringify(typed)}`);
+  }
+  assert.equal(new URL(buildSearchUrl({ condition: "asthma", place: "near Boise, Idaho" })).searchParams.get("query.locn"), "Boise, Idaho");
+  assert.equal(new URL(buildSearchUrl({ condition: "asthma", place: "near me" })).searchParams.has("query.locn"), false,
+    "a place with no place words in it is left out, not sent empty");
 });
 
 test("T5, T4: a data source that does not answer is a transient refusal, never an empty list", async () => {

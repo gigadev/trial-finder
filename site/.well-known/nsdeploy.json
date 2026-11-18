@@ -1,0 +1,18 @@
+{
+  "protocol": "nsdeploy-link/v1",
+  "exports": [
+    {
+      "network": "trial_finder",
+      "front_man": "trial_guide",
+      "aliases": [
+        "trial_finder",
+        "trial_guide"
+      ],
+      "url": "trial_finder"
+    }
+  ],
+  "imports": [],
+  "link_updates": {
+    "mode": "browser-local"
+  }
+}

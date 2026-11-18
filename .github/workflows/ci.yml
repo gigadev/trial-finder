@@ -19,6 +19,9 @@ jobs:
       # No install step: the site and its tests have no dependencies.
       - name: Unit, scripted-model and source-check tests
         run: node --test "tests/*.test.mjs"
-      # Task 4 adds the conformance check (build_network.mjs --check) here.
+      # The challenge's own checker: the network, the manifest, and that the generated
+      # files (network JSON, bridge, discovery files) match the .hocon source.
+      - name: Conformance check
+        run: node vendor/agentify-website/scripts/build_network.mjs site/trial_finder.hocon --manifest site/agent-manifest.json --check
       # Task 7 adds check_partner.mjs in both directions.
       # The eval is run by hand with a real key and never runs here.

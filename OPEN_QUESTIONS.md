@@ -368,13 +368,124 @@ Details and dates are in `docs/CLINICALTRIALS_API.md`.
 - **`.claude/launch.json` is new.** It lets the build session start the local server
   in its browser pane. It holds no secret.
 
+### B15. Task 4: decisions Scott approved, and what else was settled
+
+Approved by Scott on Nov 18, 2026 ("Yes, build it" to the task 4 plan):
+
+- **Two agents and five actions in the end.** `trial_guide` (front) and
+  `study_explainer`; actions `search_trials`, `get_trial`, `shortlist`,
+  `show_eligibility_notes`, `build_visit_sheet`. The front agent takes the visit
+  sheet; `visit_prep` is dropped, as HANDOFF §13's cut list allows. Task 4 built only
+  the front agent and the first two actions. Answers decision 1 in section C.
+- **Rule C2 reworded** in `docs/AGENT_STANDARDS.md`: "no agent is offered more than
+  five site tools, or more than seven tools in all", counted from what the runtime offers,
+  not from the network file's lists. The old wording could not hold in this runtime (A3).
+- **The chat's forms and tables are off** (no `cruse` block). The checker warns about
+  this; the warning stays.
+- **`search_trials` and `get_trial` are "write"**, because they show what the model
+  read on the page. Both run without a dialog, as every write does here.
+- **`site.js` never reads the key, not even to check that one is set.** The status
+  line always says where to add a key, and the runtime's own first chat message and "API
+  key required" badge say the rest. The skill's greeting is not used.
+
+Settled while building:
+
+- **Until task 5 the site has one agent.** Spec §6 asks to "call an internal agent";
+  task 5 adds `study_explainer`. Stage 1 is judged on the submitted site, not on this
+  step.
+- **"More results" is part of `search_trials`** (`more: true`), not its own action,
+  to stay within five.
+- **An agent's search waits for the same notice as the button.** If the visitor has not
+  answered within 2 minutes, the agent is told so and nothing is sent; the notice stays,
+  and the search still runs if they continue later. The notice scrolls into view when it
+  appears, without taking focus from the chat.
+- **The model is not given the study's contact details.** They are shown on the page.
+  Fewer personal details go to the AI provider.
+- **Criteria longer than 20,000 characters are cut for the model and marked**
+  (`criteria_cut_short`). The page still shows them whole. Task 5's check against the
+  record uses the page's copy, not the model's.
+- **The sample queries name real places but no study id**, so they keep working as
+  records change.
+- **The page links to its own public network file** in the footer, with the version.
+- **Generated files are committed** (`trial_finder.network.json`, `agent-mcp.json`,
+  `bridge/`, `.well-known/`), because the host has no build step. CI's
+  `build_network.mjs --check` fails if they drift from the `.hocon`.
+- **Default provider and model are the template's** (hosted Otari,
+  `alibaba/qwen3.8-flash`) until the eval in task 9 picks one (C11). Not looked up
+  again in this task; the source is `providers.md` at the copied commit.
+- **The place is cleaned in code before it is searched** (version 0.4.1). Scott's first
+  try, "Are there studies for type 2 diabetes near Boise, Idaho?", showed "No studies
+  match". The data source needs every place word to match, so "near Boise, Idaho" finds
+  nothing where "Boise, Idaho" finds 3 studies. The model most likely passed the word
+  "near"; this was not confirmed from the trace. `trials-api.js` now drops nearness
+  words and writes "USA" as "United States", and the instructions and the tool's
+  description ask for the place name alone. When nothing matches, the page and the
+  agent both say exactly what was searched.
+- **Instructions version 0.4.2, after Scott's third try.** Asked about asthma near
+  Portland after an earlier diabetes search, the model did not search. It asked which
+  condition to use, carried "type 2 diabetes" over from the earlier search, assumed the
+  visitor has diabetes, and said the page still needed the visitor's agreement, which it
+  could not know without calling the tool. Three lines were added: each search stands on
+  its own; searching for a condition does not mean the visitor has it; do not mention
+  the notice unless a tool result says it waits. The tool's description no longer
+  invites the model to talk about the notice. Front agent instructions: 4,171 of 5,000
+  characters. These are instruction fixes, so only the eval (task 9) can show whether
+  they hold.
+- **Instructions version 0.4.3, after Scott's fourth try.** With 0.4.2, "Find studies
+  for sleep apnea in Ohio" got "you have not agreed yet" with no tool call at all (the
+  runtime's execution log showed one model step and no tool step). The line "do not
+  mention the notice", and the tool description's sentence about agreeing, put the idea
+  in front of the model on every message. Both are removed: the model is now told
+  nothing about the notice, which is the page's job in code. It hears of it only in a
+  refusal's reason, when a search really waits. A test keeps the words "notice",
+  "agree", "consent" and "permission" out of the instructions and tool descriptions.
+- **Chrome offered saved logins in the chat box** (Scott's test). The runtime's key field
+  is a password-type input, and no form surrounds it, so Chrome treats the nearest text
+  box before it as a username box: the chat box, which came first. Fixed in our files,
+  not the runtime's: the settings slot now comes before the chat in \`index.html\`, and
+  \`site.js\` sets \`autocomplete="off"\` on the chat box after boot (reported to be
+  ignored by Chrome for saved logins, so the reorder is the real fix). Confirmed gone in
+  Scott's Chrome on Nov 18, 2026.
+- **The assistant's layout, at Scott's request.** The "Agents working for you" panel is
+  now a slim full-width row above the chat instead of a side column, so the chat uses
+  the full width. The panel stays because it shows which sites take part (D9); with
+  Developer on, the same slot shows the execution log, kept to a scrolling box. The
+  chat is 560 px tall.
+- **A multi-line message box.** The runtime's chat box is a one-line input that it reads
+  directly, and its files are not ours. \`site.js\` puts a textarea in front of it, copies
+  what is typed into the runtime's box, and presses the runtime's own Send. Enter sends;
+  Shift+Enter starts a new line. Line breaks become spaces, because the runtime's box
+  cannot hold them. If the runtime's markup changes, this step fails quietly and the
+  runtime's own box stays.
+- **A menu at the top of the page** (Scott's test: the study details opened out of
+  sight, below the chat and the results; he asked for a menu along the top). It stays in
+  view while the page scrolls. Search, Assistant and Shortlist are always there; the
+  page, not the model, adds Studies, the open study and the sheet while they show. On a
+  phone it is one row that scrolls sideways. The results and details sections link back
+  to the assistant. The challenge's rules say nothing about page layout. Each link goes to the
+  section's heading, which takes focus, so keyboard and screen-reader users land there
+  too. The agent dialog's title and close button also stay put while it scrolls.
+- **Scott's live test, Nov 18, 2026: all 13 questions passed** on
+  `alibaba/qwen3.8-flash` with instructions 0.4.3, after the fixes above. Seen on the
+  way, for the eval in task 9: Chinese characters once in an English reply ("Boise本身");
+  long answers that repeat what the cards show; a wider-place suggestion ("Pacific
+  Northwest") that the data source cannot match.
+- **For task 10 (phone and polish):** check on a real phone once the site is hosted
+  (task 8). The chat's 560 px height fills most of a phone screen; the "recruiting only"
+  checkbox is a little under a comfortable tap size; a menu that stays at the top with
+  the on-screen keyboard open is untested. So far, phone width was checked only in the
+  in-app browser's 375 px view.
+- **The confirmation dialog of our own is not used**: there is no irreversible action.
+  The consent-card handling from the skill's `site.js` is left out until task 7, when
+  there is a partner to consent to.
+
 ---
 
 ## C. Decisions waiting on Scott
 
 | # | Question | Where | My pick | Needed by |
 | --- | --- | --- | --- | --- |
-| 1 | Agents and tool count, now that every agent is offered every site tool | A3 | Two agents, five actions, chat forms off | Task 4 plan |
+| 1 | ~~Agents and tool count~~ **Answered Nov 18: two agents, five actions, chat forms off (B15)** | A3 | Two agents, five actions, chat forms off | Task 4 plan |
 | 2 | What the partner's call to us shows, now that a called network has no tools | A4 | Ours answers what it does and gives a link with the condition after `#` | Task 7 plan |
 | 3 | Page CSP against "any provider URL" | B5 | Listed providers plus the visitor's own machine | Task 8 |
 | 4 | `vendor/agentify-website/` as a development tool | B9 | Yes | Task 1 commit |
