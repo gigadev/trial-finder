@@ -1,0 +1,78 @@
+{
+  "brand": "Trial Finder Assistant",
+  "networks": [
+    {
+      "name": "trial_finder",
+      "front_man": "trial_guide",
+      "hocon": "./trial_finder.network.json",
+      "description": "Ask in plain words for clinical studies. To chat, add your own AI provider key in AI model settings above this chat. The search form works without it.",
+      "tags": [
+        "agentified-website",
+        "clinical-studies",
+        "health-information"
+      ],
+      "sample_queries": [
+        "Are there studies recruiting for type 2 diabetes near Boise, Idaho?",
+        "I am 54 and have asthma. Which studies near Portland, Oregon are taking new people?",
+        "Find studies on sleep apnea in Ohio, then tell me what the first one is about.",
+        "Can you email a study team and sign me up?"
+      ]
+    }
+  ],
+  "llm_router": {
+    "base_url": "https://api.otari.ai/api/v1",
+    "mock": false,
+    "byok_router": "https://api.otari.ai/api/v1"
+  },
+  "allowed_peers": [],
+  "peer_policy": {
+    "mode": "closed",
+    "deny_origins": [],
+    "note": "Local agents and page-local actions only. No other site is contacted."
+  },
+  "agent_mcp": {
+    "protocol": "nsdeploy-agent-mcp/v1",
+    "network": "trial_finder",
+    "front_man": "trial_guide",
+    "available": false,
+    "reason": "This is a static bundle; a public MCP facade requires an application host."
+  },
+  "theme": {
+    "primary": "#14506e"
+  },
+  "linking": {
+    "protocol": "nsdeploy-link/v1",
+    "exports": [
+      {
+        "network": "trial_finder",
+        "front_man": "trial_guide",
+        "aliases": [
+          "trial_finder",
+          "trial_guide"
+        ],
+        "url": "trial_finder"
+      }
+    ],
+    "imports": [],
+    "link_updates": {
+      "mode": "browser-local"
+    }
+  },
+  "deployment": {
+    "mode": "static",
+    "self_contained_runtime": true,
+    "browser_mock": false,
+    "direct_byok": true,
+    "direct_mcp_requires_cors": true,
+    "public_mcp_facade": false
+  },
+  "actions": {
+    "version": 1,
+    "module": "./site-actions.js",
+    "bridge": "./bridge/action-bridge.html",
+    "agentTools": [
+      "search_trials",
+      "get_trial"
+    ]
+  }
+}

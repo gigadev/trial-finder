@@ -8,6 +8,7 @@
   <meta name="description" content="Search public clinical study records in plain words, read who each study is for, and print a sheet of questions for your doctor. Information, not medical advice.">
   <link rel="stylesheet" href="./styles.css">
   <script type="module" src="./app.js"></script>
+  <script type="module" src="./site.js"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to the search</a>
@@ -19,9 +20,19 @@
     <p class="site-tagline">Find clinical studies, read who they are for, and prepare questions for your doctor.</p>
   </header>
 
+  <!-- A menu that stays at the top. The page adds "Studies found", "Study details" and
+       the sheet when they are showing (app.js, renderJumps). -->
+  <nav class="page-menu" id="jump-links" aria-label="Parts of this page">
+    <ul id="jump-list">
+      <li><a href="#search-heading">Search</a></li>
+      <li><a href="#assistant-heading">Assistant</a></li>
+      <li><a href="#shortlist-heading">Shortlist</a></li>
+    </ul>
+  </nav>
+
   <main id="main">
     <section class="panel" aria-labelledby="search-heading">
-      <h1 id="search-heading">Find clinical studies</h1>
+      <h1 id="search-heading" tabindex="-1">Find clinical studies</h1>
       <p>A clinical study tests a treatment or a way of caring for people. Search the public records by condition and place.</p>
       <p class="not-advice">This is information, not medical advice. It cannot tell you whether you can join a study. Ask your doctor or the study team.</p>
 
@@ -62,7 +73,7 @@
 
       <section class="notice" id="notice" aria-labelledby="notice-heading" hidden>
         <h2 id="notice-heading" tabindex="-1">Before your first search</h2>
-        <p id="notice-text">Your search words (the condition, place, age and sex you enter) are sent to ClinicalTrials.gov, a public database run by the U.S. National Library of Medicine, to find studies. Nothing is sent to this site, and this site stores nothing about you.</p>
+        <p id="notice-text">Your search words (the condition, place, age and sex you enter) are sent to ClinicalTrials.gov, a public database run by the U.S. National Library of Medicine, to find studies. If you use the assistant, what you type to it and the study records it reads also go to the AI provider you chose in its settings. Nothing is sent to this site, and this site stores nothing about you.</p>
         <div class="button-row">
           <button type="button" id="notice-continue" class="primary">Continue and search</button>
           <button type="button" id="notice-decline">Do not search</button>
@@ -72,6 +83,24 @@
       <p class="status" id="status" role="status" aria-live="polite"></p>
     </section>
 
+    <section class="panel assistant" id="assistant" aria-labelledby="assistant-heading">
+      <h2 id="assistant-heading" tabindex="-1">Or ask the assistant</h2>
+      <p>Describe what you are looking for in your own words. The assistant searches the same public records and shows the studies on this page.</p>
+      <p class="assistant-note" id="assistant-note">The assistant runs in your browser on your own AI provider key. What you type to it, and the study records it reads, go to the AI provider you choose in the settings below, at that provider's prices. Nothing goes to this site.</p>
+      <p class="not-advice">This is information, not medical advice. It cannot tell you whether you can join a study. Ask your doctor or the study team.</p>
+      <p class="status" id="assistant-status" role="status">Loading the assistant… If this message stays, the assistant could not load. The search form above still works.</p>
+      <div id="agent-app">
+        <div data-ns-slot="header"></div>
+        <!-- Settings come before the chat on purpose: the key field is a password field,
+             and Chrome offers saved logins in the nearest text box before one. -->
+        <div data-ns-slot="settings"></div>
+        <!-- Who is working shows as a slim strip above the chat, so the chat can use the
+             full width. The Developer toggle shows the execution log here instead. -->
+        <div data-ns-slot="agents"></div>
+        <div data-ns-slot="chat"></div>
+      </div>
+    </section>
+
     <section class="panel" id="results" aria-labelledby="results-heading" hidden>
       <h2 id="results-heading" tabindex="-1">Studies found</h2>
       <p id="results-summary"></p>
@@ -79,13 +108,17 @@
       <div id="results-list"></div>
       <button type="button" id="more-results" hidden>Show more studies</button>
       <p class="source" id="results-source"></p>
+      <p><a class="back-link" href="#assistant-heading">Back to the assistant</a></p>
     </section>
 
     <section class="panel" id="study" aria-labelledby="study-heading" hidden>
       <h2 id="study-heading" tabindex="-1">Study details</h2>
       <p class="not-advice">This is information, not medical advice. It cannot tell you whether you can join a study. Ask your doctor or the study team.</p>
       <div id="study-body"></div>
-      <button type="button" id="study-close">Close these details</button>
+      <div class="button-row">
+        <button type="button" id="study-close">Close these details</button>
+        <a class="back-link" href="#assistant-heading">Back to the assistant</a>
+      </div>
     </section>
 
     <section class="panel" id="shortlist" aria-labelledby="shortlist-heading">
@@ -119,6 +152,7 @@
     <p id="source-line">Study information comes from ClinicalTrials.gov, a public database. Each study shows its own link and the date its record was last updated.</p>
     <p id="not-affiliated">Trial Finder is not affiliated with or endorsed by the U.S. National Institutes of Health, the National Library of Medicine or ClinicalTrials.gov. A study being listed there does not mean the U.S. government has reviewed or approved it.</p>
     <p>This site has no accounts and no server. It stores nothing about you.</p>
+    <p id="network-version">Assistant instructions version 0.4.3. They are public: <a href="./trial_finder.network.json">read them</a>.</p>
   </footer>
 </body>
 </html>

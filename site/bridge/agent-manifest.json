@@ -1,0 +1,10 @@
+{
+  "networks": [
+    {
+      "name": "trial_finder"
+    }
+  ],
+  "actions": {
+    "version": 1
+  }
+}

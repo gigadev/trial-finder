@@ -29,7 +29,7 @@ export const MAX_QUESTION_LENGTH = 300;
 export const WORDING = Object.freeze({
   notAdvice: "This is information, not medical advice. It cannot tell you whether you can join a study. Ask your doctor or the study team.",
   emergency: "If this is an emergency, call your local emergency number.",
-  notice: "Your search words (the condition, place, age and sex you enter) are sent to ClinicalTrials.gov, a public database run by the U.S. National Library of Medicine, to find studies. Nothing is sent to this site, and this site stores nothing about you.",
+  notice: "Your search words (the condition, place, age and sex you enter) are sent to ClinicalTrials.gov, a public database run by the U.S. National Library of Medicine, to find studies. If you use the assistant, what you type to it and the study records it reads also go to the AI provider you chose in its settings. Nothing is sent to this site, and this site stores nothing about you.",
   notAffiliated: "Trial Finder is not affiliated with or endorsed by the U.S. National Institutes of Health, the National Library of Medicine or ClinicalTrials.gov. A study being listed there does not mean the U.S. government has reviewed or approved it.",
   source: "Source: ClinicalTrials.gov",
   criteriaHeading: "Who can take part, in the study's own words",
@@ -143,7 +143,7 @@ export class TrialFinderPage {
       "results-heading", "results-summary", "results-list", "more-results", "results-source", "study",
       "study-heading", "study-body", "study-close", "shortlist-heading", "shortlist-empty", "shortlist-list",
       "shortlist-error", "make-sheet", "sheet", "sheet-heading", "sheet-body", "sheet-questions", "sheet-error",
-      "sheet-update", "sheet-print", "sheet-close"]) {
+      "sheet-update", "sheet-print", "sheet-close", "jump-links", "jump-list"]) {
       this.nodes[id] = document.getElementById(id);
     }
     this.connectButtons();
@@ -195,6 +195,9 @@ export class TrialFinderPage {
       const promise = new Promise((done) => { resolve = done; });
       this.pendingNotice = { promise, resolve };
       this.changed();
+      // Bring the notice into view, as a search started from the chat may be far from it.
+      // Scrolling does not move focus, so the visitor's typing is not interrupted.
+      this.nodes.notice.scrollIntoView?.({ block: "center" });
     }
     return this.pendingNotice.promise;
   }
@@ -249,6 +252,7 @@ export class TrialFinderPage {
       total: result.total,
       nextPageToken: result.nextPageToken,
       nothingMatches: result.nothingMatches,
+      searched: result.searched,
     };
     this.changed();
     return result;
@@ -530,6 +534,28 @@ export class TrialFinderPage {
     this.renderStudy();
     this.renderShortlist();
     this.renderSheet();
+    this.renderJumps();
+  }
+
+  /**
+   * The menu at the top of the page. Search, the assistant and the shortlist are always
+   * there; studies found, the study's details and the sheet are added while they show,
+   * so a visitor reading the chat can get to what the assistant opened.
+   */
+  renderJumps() {
+    const links = [["#search-heading", "Search"], ["#assistant-heading", "Assistant"]];
+    if (this.results) {
+      const count = this.results.studies.length;
+      links.push(["#results-heading", this.results.nothingMatches ? "Studies (none)" : `Studies (${count})`]);
+    }
+    if (this.study.status !== "closed" && this.study.id) links.push(["#study-heading", `Study ${this.study.id}`]);
+    links.push(["#shortlist-heading", this.shortlist.length ? `Shortlist (${this.shortlist.length})` : "Shortlist"]);
+    if (this.sheet.open) links.push(["#sheet-heading", "Sheet for the doctor"]);
+    this.nodes["jump-list"].replaceChildren(...links.map(([href, label]) => {
+      const link = this.make("a", label);
+      link.setAttribute("href", href);
+      return this.box("li", undefined, link);
+    }));
   }
 
   renderNotice() {
@@ -558,11 +584,13 @@ export class TrialFinderPage {
       this.nodes["results-list"].replaceChildren();
       return;
     }
+    const searched = `"${results.searched.condition}"${results.searched.place ? ` in "${results.searched.place}"` : ""}`;
     if (results.nothingMatches) {
-      this.nodes["results-summary"].textContent = WORDING.nothingMatches;
+      // Say exactly what was searched, so a visitor can see why nothing matched.
+      this.nodes["results-summary"].textContent = `Searched for ${searched}. ${WORDING.nothingMatches}`;
     } else {
       const total = results.total === null ? "" : ` of ${results.total} found`;
-      const place = this.search.input?.place ? `, for the place "${this.search.input.place}"` : "";
+      const place = results.searched.place ? `, for the place "${results.searched.place}"` : "";
       this.nodes["results-summary"].textContent = `Showing ${results.studies.length}${total}${place}. A study may be recruiting overall while a site near you is not; each study lists its recruiting sites.`;
     }
     this.nodes["results-list"].replaceChildren(...results.studies.map((study) => this.studyCard(study)));

@@ -327,3 +327,164 @@ button.primary:hover {
   .criteria { background: #ffffff; }
   a { color: inherit; }
 }
+
+/* ------------------------------------------------------------------------------
+   The assistant. Adapted from the skill's templates/assistant.css, with this site's
+   colours. White text sits on --ns-primary and --ns-accent (8.7:1).
+   ------------------------------------------------------------------------------ */
+
+.assistant-note {
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+}
+
+#agent-app {
+  --ns-font: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --ns-bg: #ffffff;
+  --ns-fg: #1b2430;
+  --ns-primary: #14506e;
+  --ns-accent: #14506e;
+  --ns-border: #c3cad3;
+  --ns-panelbg: #ffffff;
+  --ns-msgbg: #f3f5f7;
+  --ns-muted: #46515f;
+}
+
+/* Set the height once the runtime has mounted the chat, so a failed load leaves no
+   empty box. */
+#agent-app.ns-composed-app [data-ns-slot="chat"] { height: 560px; margin-top: 0.5rem; }
+
+/* "Agents working for you" as one slim row above the chat. It lists the sites taking
+   part, with a dot for each one's state; the chat then uses the full width. */
+#agent-app [data-ns-slot="agents"] { margin-top: 0.75rem; }
+#agent-app [data-ns-slot="agents"] > .ns-agents {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.75rem;
+  padding: 0.4rem 0.75rem;
+  height: auto;
+  overflow: visible;
+}
+#agent-app [data-ns-slot="agents"] > .ns-agents h3 { font-size: 0.75rem; }
+#agent-app #ns-anodes { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+#agent-app #ns-anodes > * { margin: 0; }
+/* With Developer on, the same slot shows the execution log. Keep it a scrolling box. */
+#agent-app [data-ns-slot="agents"] > .ns-dev { max-height: 360px; overflow: auto; }
+
+/* The multi-line message box that site.js puts in front of the runtime's one-line box. */
+#agent-app #assistant-message {
+  flex: 1 1 100%;
+  width: 100%;
+  min-height: 4.5rem;
+  max-height: 12rem;
+  resize: vertical;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid #6b7684;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1.4;
+}
+#agent-app .ns-inputbar { align-items: flex-start; }
+#agent-app .ns-inputbar #ns-input[hidden] { display: none; }
+#agent-app .ns-chat { background: var(--ns-bg); }
+
+/* This site's form and button rules would stretch or restyle the runtime's controls. */
+#agent-app input[type="checkbox"],
+#agent-app input[type="radio"] { width: auto; min-height: 0; }
+#agent-app input[type="text"],
+#agent-app input[type="password"],
+#agent-app select,
+#agent-app textarea { min-height: 0; }
+#agent-app .ns-header { flex-wrap: wrap; }
+#agent-app .ns-settings-body label { margin: 4px 0; font-weight: 400; }
+#agent-app label { display: revert; }
+#agent-app button { margin: 0; min-height: 0; font-weight: inherit; }
+#agent-app button:hover { background: revert-layer; }
+#agent-app .ns-devtoggle:not(.on):hover,
+#agent-app .ns-modal-close:hover { background: transparent; }
+#agent-app .ns-msg { overflow-wrap: break-word; }
+#agent-app .ns-consent { background: #fffbeb; }
+#agent-app .ns-msgs:has(.ns-consent-actions) > .ns-turn-status { display: none; }
+#agent-app .ns-consent-actions { flex-wrap: wrap; }
+#agent-app .ns-consent-actions button { white-space: nowrap; }
+
+/* The runtime adds its confirmation dialog to <body>, outside #agent-app. */
+body > dialog h2 { margin: 0 0 12px; font: 700 1.25em system-ui, sans-serif; }
+body > dialog button { margin-right: 8px; }
+
+@media print {
+  #assistant { display: none !important; }
+}
+
+/* The runtime's agent dialog scrolls as one card. Keep its close button and title at
+   the top while the instructions scroll beneath them. */
+#agent-app .ns-modal-card { padding-top: 0; }
+#agent-app .ns-modal-card > .ns-modal-close {
+  position: sticky;
+  top: 0.75rem;
+  float: right;
+  z-index: 3;
+  width: 2.25rem;
+  height: 2.25rem;
+  margin: 0.75rem 0 0 0.5rem;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #46515f;
+}
+#agent-app .ns-modal-card > .ns-modal-close:hover { background: #e6eff4; }
+#agent-app .ns-modal-card > h4 {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  margin: 0;
+  padding: 18px 3rem 4px 0;
+  line-height: 24px;
+  background: #ffffff;
+}
+#agent-app .ns-modal-card > h4 + .ns-mrole {
+  position: sticky;
+  top: 46px;
+  z-index: 2;
+  margin: 0;
+  padding: 0 0 10px;
+  background: #ffffff;
+  border-bottom: 1px solid #c3cad3;
+}
+
+/* The menu at the top. It stays in view while the page scrolls. */
+.page-menu {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+  box-shadow: 0 2px 6px rgba(27, 36, 48, 0.08);
+}
+#jump-list {
+  display: flex;
+  gap: 0.25rem 1.25rem;
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: 0 1rem;
+  list-style: none;
+  flex-wrap: wrap;
+}
+#jump-list a,
+.back-link {
+  display: inline-block;
+  padding: 0.6rem 0;
+  font-weight: 600;
+}
+/* Headings the menu jumps to stop below the menu, not under it. */
+h1[id], h2[id] { scroll-margin-top: 5.5rem; }
+/* On a phone the menu is one row that scrolls sideways, so it stays short. */
+@media (max-width: 30rem) {
+  #jump-list { flex-wrap: nowrap; overflow-x: auto; white-space: nowrap; scrollbar-width: thin; }
+  h1[id], h2[id] { scroll-margin-top: 3.5rem; }
+}
+.button-row .back-link { align-self: center; }
+@media print {
+  .page-menu, .back-link { display: none !important; }
+}

@@ -80,6 +80,8 @@ are never asked for.
 | What does a bad `pageToken` or field name return? | HTTP 400, plain text. | Nov 18 |
 | What does a search with no matches return? | HTTP 200 with `totalCount: 0` and an empty `studies` list. | Nov 18 |
 | Do "Boise", "Boise, Idaho" and "Boise ID" find the same studies? | Yes, in the one case tried. | Nov 18 |
+| Must every word of the place match? | **Yes.** For type 2 diabetes, "Boise, Idaho" found 3 studies; "near Boise, Idaho" and "Boise Idaho USA" found 0, and so did the place written inside the condition. "Boise, Idaho, United States" found 3. So the site drops words about nearness ("near", "around", "within 50 miles of", a leading "in") and writes "USA" and "U.S." as "United States" before searching. Found by Scott's first try of the assistant. | Nov 18 |
+| Does a zip code work as a place? | **No.** "83706", a Boise zip code, found 0 where "Boise" found 3. Not fixed; the form's hint asks for a city and state. | Nov 18 |
 | Does a study match a place when its site there is not recruiting? | Yes. The asthma study found for Boise is recruiting overall, has 223 sites, and its Boise site is `WITHDRAWN`. | Nov 17, 18 |
 
 ## Not known
