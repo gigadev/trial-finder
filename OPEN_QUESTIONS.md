@@ -510,6 +510,37 @@ Settled while building:
   eval in task 9. A quick try is welcome: search, open a study, then ask "I am 54 and
   have had asthma for 3 years. Which of its criteria fit me?"
 
+### B17. Task 6: what was settled
+
+- **No `visit_prep` agent.** As approved in B15, the front agent makes the sheet with
+  `build_visit_sheet`. The site now has its five actions: the front agent is offered six
+  tools in all, the explainer five (C2's limits are 5 site tools, 7 in all).
+- **Questions add to the sheet; they do not replace each other.** The agent's and the
+  visitor's questions go onto one list, without repeats, at most 12. Each added
+  question has its own "Remove" button on the sheet (not printed). The sheet's question
+  box now says "Add your own questions" and its button "Add to the sheet", and empties
+  once the questions are on the sheet.
+- **A question the agent adds must be a question and state no verdict** (code, with
+  tests). "Am I eligible for this study?" is allowed: it is a fair question for a doctor.
+  "You qualify?" and statements are refused. The visitor's own typed questions are not
+  checked: they are the visitor's words.
+- **The sheet lists each study's "cannot tell" points** from the AI notes, under "Points
+  to ask the study team about", labelled as AI-written but in the study's own words. The
+  other two states and the AI's reasons do not go on the sheet: on paper, away from the
+  page's disclaimer, "Likely meets" could read like a decision.
+- **The plain pages name no person.** About says the site is "a personal entry" to the
+  challenge, without a name or an employer. **Scott: decide whether you want your name
+  on it** (the Devpost submission names you anyway).
+- **Outside links are to ClinicalTrials.gov only** (its disclaimer, terms and "Learn about
+  studies" pages), because the source check allows no other origin. Each was checked in
+  a browser on Nov 18, 2026: the site answers 200 even for a made-up page, so a status
+  code proves nothing. The GitHub repository is mentioned but not linked.
+- **`ai.html` must change in task 7.** It says the assistant contacts no other site. A
+  test names that line, so it fails until the partner site is described (D6).
+- **The disclaimer is paraphrased**, as HANDOFF §10 asks, and links to the original.
+- **Wording review is Scott's** (HANDOFF §13: 0.5 h). The plain pages are new copy that
+  only a person should approve.
+
 ---
 
 ## C. Decisions waiting on Scott

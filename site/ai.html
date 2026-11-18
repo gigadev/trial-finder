@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>How the AI works here: Trial Finder</title>
+  <meta name="description" content="What the Trial Finder assistant sends, where it goes, what the code checks, and what it cannot check.">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to the page</a>
+
+  <p class="emergency">If this is an emergency, call your local emergency number.</p>
+
+  <header class="site-header">
+    <p class="site-name"><a href="./index.html">Trial Finder</a></p>
+    <p class="site-tagline">Find clinical studies, read who they are for, and prepare questions for your doctor.</p>
+  </header>
+
+  <nav class="page-menu" aria-label="Pages">
+    <ul id="jump-list">
+      <li><a href="./index.html">Search</a></li>
+      <li><a href="./about.html">About</a></li>
+      <li><a href="./ai.html" aria-current="page">How the AI works</a></li>
+      <li><a href="./not-medical-advice.html">Not medical advice</a></li>
+      <li><a href="./data.html">Data source</a></li>
+    </ul>
+  </nav>
+
+  <main id="main">
+    <article class="panel prose">
+      <h1>How the AI works here</h1>
+      <p class="not-advice">This is information, not medical advice. It cannot tell you whether you can join a study. Ask your doctor or the study team.</p>
+
+      <h2>Two ways to use the site</h2>
+      <p>The search form uses no AI at all. The assistant is an AI that does the same things for you when you ask in your own words. It runs in your browser, on your own key from an AI provider you choose. This site runs no AI, pays for none and sees none of your conversation.</p>
+
+      <h2 id="what-is-sent">What is sent, and where</h2>
+      <table class="plain-table">
+        <thead>
+          <tr><th>What</th><th>Goes to</th><th>When</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Your search words: the condition, place, age and sex you enter</td>
+            <td>ClinicalTrials.gov, a public database run by the U.S. National Library of Medicine</td>
+            <td>Each time you search, by the form or by the assistant. The first time on each visit, the page asks you first.</td>
+          </tr>
+          <tr>
+            <td>What you type to the assistant, the chat so far, and the study records it reads</td>
+            <td>The AI provider you chose in the assistant's settings</td>
+            <td>Each time you send the assistant a message. Their prices and their privacy terms apply.</td>
+          </tr>
+          <tr>
+            <td>The assistant's instructions and the list of things it can do</td>
+            <td>The same AI provider</td>
+            <td>With each message. They are public anyway: <a href="./trial_finder.network.json">read them</a>.</td>
+          </tr>
+          <tr>
+            <td>Anything at all</td>
+            <td>This site</td>
+            <td>Never. The site is plain files; it has no server that receives anything.</td>
+          </tr>
+          <tr>
+            <td>Anything at all</td>
+            <td>Any other site</td>
+            <td>Never. The assistant does not contact other sites.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>A study's contact details are shown on the page as the record lists them. They are not sent to the AI provider, and they are never used for anything else.</p>
+
+      <h2>Your key</h2>
+      <p>The assistant's settings panel belongs to the challenge's open browser runtime. Trial Finder's own code never reads your key. The runtime keeps it in this browser only:</p>
+      <ul>
+        <li>Saved setups, key included, in this site's local storage, until you delete them.</li>
+        <li>The setup in use, also in this tab's session storage, until the tab is closed.</li>
+        <li>When the site runs on your own computer for testing (an address starting with localhost or 127.0.0.1), the runtime also copies saved setups into a cookie for 180 days, which other pages on that computer's local addresses can read. Use a key with a low spending limit for testing.</li>
+      </ul>
+      <p>To remove it: open AI model settings, then Advanced settings, choose Delete setup, and close the tab. Your key is sent only to the AI provider you chose.</p>
+
+      <h2>The assistant's two helpers</h2>
+      <ul>
+        <li><strong>The Trial Finder assistant</strong> talks with you. It can search, open a study's details, change your shortlist, and make your sheet for the doctor.</li>
+        <li><strong>The study explainer</strong> reads one study's rules about who can take part, compares them with what you told the assistant, and puts notes on the page. It sees only the study's id and the facts the assistant passes on, never your whole chat.</li>
+      </ul>
+      <p>Neither can contact a study, send a message, sign you up, book anything, store anything about you, or read your key. There is no button or tool for any of those to press.</p>
+
+      <h2>What the code checks</h2>
+      <p>Some rules must always hold, so they are checked by the page's own code, whatever the AI writes:</p>
+      <ul>
+        <li>Nothing is searched until you agree, once per visit, to send your search words.</li>
+        <li>Only studies the page has shown can go on your shortlist.</li>
+        <li>Notes on a study's rules are refused until the page has fetched that study's record.</li>
+        <li>Each note must quote the study's own words, found in its record. A quote that is not there is dropped.</li>
+        <li>Each note says only "Likely meets", "Likely does not meet" or "Cannot tell: ask the study team", under a heading that says the notes are written by AI and are not a decision. A note that decides for you whether you can take part is dropped.</li>
+        <li>Questions the assistant adds to your sheet must be questions, and must not decide for you whether you can take part.</li>
+        <li>Text written by a study's sponsor is marked as such for the AI, as something to read, never as instructions to follow.</li>
+      </ul>
+
+      <h2>What the code cannot check</h2>
+      <ul>
+        <li><strong>The assistant's own words in the chat are written by the AI.</strong> The code cannot stop it saying something wrong there. The cards, the study details and the rules in the study's own words on the page come from the record; when the chat and the page differ, trust the page, and ask the study team.</li>
+        <li><strong>The assistant changes the page without asking first:</strong> it can search, open a study, change your shortlist, add notes and make your sheet. You can see each change and undo it on the page. It cannot print; printing is your own button.</li>
+        <li>AI can be wrong, and so can a record. Only the study team can say whether you can take part.</li>
+      </ul>
+
+      <h2>Seeing what it did</h2>
+      <p>Above the chat, "Agents working for you" shows which part of the assistant is working. The Developer button shows a log of every step: which helper ran, which tool it used, and what came back. It never shows your key.</p>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <p>Trial Finder is not affiliated with or endorsed by the U.S. National Institutes of Health, the National Library of Medicine or ClinicalTrials.gov. A study being listed there does not mean the U.S. government has reviewed or approved it.</p>
+    <p>This site has no accounts and no server. It stores nothing about you.</p>
+  </footer>
+</body>
+</html>

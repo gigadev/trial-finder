@@ -20,6 +20,7 @@
 // searching again or closing the details (OPEN_QUESTIONS.md A2).
 
 import { App } from "./app.js";
+import { isSheetQuestion } from "./guard.js";
 
 /** How long an agent's search waits for the visitor to answer the first-search notice. */
 export const NOTICE_WAIT_MS = 120000;
@@ -121,6 +122,53 @@ export class SiteActions {
     actions.register(SiteActions.getTrialAction());
     actions.register(SiteActions.shortlistAction());
     actions.register(SiteActions.showEligibilityNotesAction());
+    actions.register(SiteActions.buildVisitSheetAction());
+  }
+
+  static buildVisitSheetAction() {
+    return {
+      name: "build_visit_sheet",
+      description: "Make or update the printable sheet for the visitor's doctor or the study team, from the studies on the shortlist. "
+        + "Input: questions, short questions to add in the visitor's own words, such as \"Can I keep seeing my own doctor?\"; at most 12 in all, and repeats are skipped. "
+        + "The sheet also lists each study's criteria word for word, the points the AI notes could not tell, a fixed list of standard questions, the source and the data date. "
+        + "Returns the study ids on the sheet, any whose record could not be fetched, and the added questions; or ok false when the shortlist is empty. "
+        + "It does not print or send anything: printing is the visitor's own button.",
+      effect: "write",
+      inputSchema: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          questions: {
+            type: "array",
+            maxItems: 12,
+            description: "Questions to add, in the visitor's words. Never advice, never a verdict.",
+            items: { type: "string", minLength: 1, maxLength: 300 },
+          },
+        },
+      },
+      execute: SiteActions.buildVisitSheet,
+    };
+  }
+
+  static async buildVisitSheet(args) {
+    try {
+      const questions = args.questions ?? [];
+      const notQuestions = questions.filter((line) => !isSheetQuestion(line));
+      if (notQuestions.length) {
+        return refuse("validation", false, `Only questions go on the sheet: each one ends with "?" and states no verdict. Not added: ${notQuestions.map((line) => `"${line.slice(0, 80)}"`).join(", ")}. Nothing was changed.`);
+      }
+      const result = await App.page.buildSheet({ questions });
+      if (!result.ok) return passRefusal(result);
+      return {
+        ok: true,
+        studies_on_sheet: result.studies,
+        could_not_fetch: result.missing,
+        added_questions: result.questions,
+        next: "The sheet is on the page. The visitor prints it with its Print button.",
+      };
+    } catch {
+      return UNEXPECTED;
+    }
   }
 
   static shortlistAction() {

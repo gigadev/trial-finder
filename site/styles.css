@@ -523,3 +523,36 @@ h1[id], h2[id] { scroll-margin-top: 5.5rem; }
   .notes-table td { border: 0; }
   .notes-table td:nth-child(2) { white-space: normal; }
 }
+
+/* The sheet: points to ask about, and the remove buttons beside added questions. */
+.cannot-tell {
+  border-left: 4px solid var(--warn-line);
+  background: var(--warn-bg);
+  padding: 0.5rem 0.75rem;
+  margin: 0.5rem 0 0.75rem;
+}
+.cannot-tell h4 { margin-top: 0; }
+.cannot-tell ul { margin: 0.25rem 0 0; padding-left: 1.4rem; }
+.added-question { margin-bottom: 0.35rem; }
+.added-question span { margin-right: 0.5rem; }
+button.small { min-height: 2rem; padding: 0.15rem 0.6rem; font-size: 0.9rem; }
+
+/* The plain pages. */
+.site-name a { color: inherit; text-decoration: none; }
+.site-name a:hover { text-decoration: underline; }
+.page-menu a[aria-current="page"] { color: var(--ink); text-decoration: none; border-bottom: 3px solid var(--brand); }
+.prose h2 { margin-top: 1.5rem; }
+.prose h3 { margin-top: 1.25rem; }
+.prose ul { padding-left: 1.4rem; }
+.prose li { margin-bottom: 0.35rem; }
+.plain-table { width: 100%; border-collapse: collapse; margin: 0.5rem 0 1rem; font-size: 0.95rem; }
+.plain-table th, .plain-table td { border: 1px solid var(--line); padding: 0.45rem 0.55rem; text-align: left; vertical-align: top; }
+.plain-table th { background: #eef4f7; }
+.footer-links { display: flex; flex-wrap: wrap; gap: 0.25rem 1.25rem; margin: 0.5rem 0 0; padding: 0; list-style: none; }
+@media (max-width: 30rem) {
+  .plain-table, .plain-table tbody, .plain-table tr, .plain-table td { display: block; width: 100%; }
+  .plain-table thead { display: none; }
+  .plain-table tr { border: 1px solid var(--line); margin-bottom: 0.5rem; }
+  .plain-table td { border: 0; }
+  .plain-table td:first-child { font-weight: 600; }
+}

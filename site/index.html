@@ -135,12 +135,12 @@
       <div id="sheet-body"></div>
       <div class="no-print">
         <div class="field">
-          <label for="sheet-questions">Your own questions, one per line <span class="optional">(optional)</span></label>
+          <label for="sheet-questions">Add your own questions, one per line <span class="optional">(optional)</span></label>
           <textarea id="sheet-questions" rows="4" maxlength="2000"></textarea>
         </div>
         <p class="error" id="sheet-error" role="alert" hidden></p>
         <div class="button-row">
-          <button type="button" id="sheet-update">Update the sheet</button>
+          <button type="button" id="sheet-update">Add to the sheet</button>
           <button type="button" id="sheet-print" class="primary">Print this sheet</button>
           <button type="button" id="sheet-close">Close the sheet</button>
         </div>
@@ -152,7 +152,15 @@
     <p id="source-line">Study information comes from ClinicalTrials.gov, a public database. Each study shows its own link and the date its record was last updated.</p>
     <p id="not-affiliated">Trial Finder is not affiliated with or endorsed by the U.S. National Institutes of Health, the National Library of Medicine or ClinicalTrials.gov. A study being listed there does not mean the U.S. government has reviewed or approved it.</p>
     <p>This site has no accounts and no server. It stores nothing about you.</p>
-    <p id="network-version">Assistant instructions version 0.5.0. They are public: <a href="./trial_finder.network.json">read them</a>.</p>
+    <nav aria-label="About this site">
+      <ul class="footer-links">
+        <li><a href="./about.html">About</a></li>
+        <li><a href="./ai.html">How the AI works here</a></li>
+        <li><a href="./not-medical-advice.html">Not medical advice</a></li>
+        <li><a href="./data.html">Where the data comes from</a></li>
+      </ul>
+    </nav>
+    <p id="network-version">Assistant instructions version 0.6.0. They are public: <a href="./trial_finder.network.json">read them</a>.</p>
   </footer>
 </body>
 </html>
