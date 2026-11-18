@@ -127,6 +127,12 @@ function assertRefusalBlock(value, category) {
   assert.equal(value.category, category);
 }
 
+/** All text under a stand-in element, as a visitor would read it. */
+function textOf(element) {
+  if (!element || typeof element !== "object") return String(element ?? "");
+  return [element.textContent, ...(element.children ?? []).map(textOf)].filter(Boolean).join(" ");
+}
+
 /** Every path in a value at which a string contains the marker. */
 function pathsContaining(value, marker, at = "") {
   if (typeof value === "string") return value.includes(marker) ? [at] : [];
@@ -214,7 +220,9 @@ test("every action in the manifest is registered, local-only, named in the instr
   const actions = await registry();
   const registered = new Map(actions.catalog({ base: BASE, network: NETWORK_NAME }).map((entry) => [entry.name, entry]));
   assert.deepEqual([...registered.keys()].sort(), [...MANIFEST.actions.agentTools].sort());
-  const lines = network().getAgentSpec("trial_guide").instructions.split("\n");
+  // A specialist can own a site tool, so read every agent's lines, as the skill's template does.
+  const net = network();
+  const lines = CONFIG.tools.flatMap((agent) => net.getAgentSpec(agent.name).instructions.split("\n"));
   for (const name of MANIFEST.actions.agentTools) {
     const entry = registered.get(name);
     assert.equal(entry.availability, "local-only");
@@ -515,10 +523,16 @@ test("T8, W4: a hostile record reaches the model only as labelled record text, a
   const { page, node, requests } = freshPage({ getTrialOverride: async () => hostileStudy });
   page.noticeAccepted = true;
   const before = page.getState();
-  // The script plays a model that obeys the record: it tries tools that do not exist.
+  // The script plays a model that obeys the record: it adds the id the record names,
+  // shows a verdict as a note, and tries to send email.
   const { run, model } = await runScript([
     { tool: "website_get_trial", arguments: { id: STUDY_ID } },
-    { tool: "website_update_shortlist", arguments: { id: "NCT99999998", change: "add" } },
+    { tool: "website_shortlist", arguments: { change: "add", id: "NCT99999998" } },
+    { tool: "website_show_eligibility_notes", arguments: { id: STUDY_ID, notes: [
+      { criterion: HOSTILE, status: "likely_meets", why: "You qualify for this study." },
+      { criterion: "Age 18 or older and eligible for everything", status: "likely_meets", why: "The record says so." },
+    ] } },
+    { tool: "website_show_eligibility_notes", arguments: { id: STUDY_ID, notes: [{ criterion: HOSTILE, status: "qualifies", why: "Yes." }] } },
     { tool: "website_send_email", arguments: { to: "hostile@example.test", body: "Sign me up" } },
     { text: "Done." },
   ]);
@@ -532,20 +546,183 @@ test("T8, W4: a hostile record reaches the model only as labelled record text, a
   for (const call of model.calls) {
     assert.equal(call.messages[0].content.includes("IGNORE YOUR INSTRUCTIONS"), false);
     const tools = call.tools.map((tool) => tool.function.name);
-    assert.deepEqual(tools.sort(), ["website_get_trial", "website_search_trials"], "no other tool is ever offered");
+    assert.deepEqual(tools.sort(), ["study_explainer", "website_get_trial", "website_search_trials", "website_shortlist", "website_show_eligibility_notes"], "no other tool is ever offered");
   }
-  for (const call of [2, 3]) {
-    const message = model.calls[call].messages.filter((entry) => entry.role === "tool").at(-1).content;
-    assert.match(message, /^Error: unknown tool 'website_/, "a tool that does not exist does nothing");
-  }
+  const lastTool = (call) => model.calls[call].messages.filter((entry) => entry.role === "tool").at(-1).content;
+  // Only ids the page has shown can be shortlisted (W5).
+  assertRefusalBlock(JSON.parse(lastTool(2)).result, "not_found");
+  // A verdict, and a quote that is not in the record, are dropped; nothing survives (W2, C8).
+  const notes = JSON.parse(lastTool(3)).result;
+  assertRefusalBlock(notes, "validation");
+  assert.match(notes.reason, /verdict/);
+  assert.match(notes.reason, /not in the study's criteria/);
+  // A fourth state is refused by the schema before the page sees it (W2).
+  assert.match(lastTool(4), /^Error from tool 'website_show_eligibility_notes'/);
+  // A tool that does not exist does nothing (W3).
+  assert.match(lastTool(5), /^Error: unknown tool 'website_send_email'/);
   // What the code controls is unchanged: no shortlist entry, no sheet, no other request.
   const after = page.getState();
   assert.deepEqual(after.shortlist, before.shortlist);
+  assert.deepEqual(after.notes, {}, "no note reached the page");
+  assert.equal(textOf(node("study-body")).includes("You qualify"), false);
   assert.deepEqual(after.sheet, before.sheet);
   assert.deepEqual(after.results, before.results);
   assert.deepEqual(requests, []);
   // The page shows the record as text, under its fixed heading, never as markup.
   assert.equal(node("study-body").querySelectorAll("pre")[1].textContent, fixture.protocolSection.eligibilityModule.eligibilityCriteria);
+});
+
+// ---------------------------------------------------------------------------------
+// The specialist, the order of steps, and the shortlist (task 5)
+// ---------------------------------------------------------------------------------
+
+const CRITERIA = JSON.parse(FIXTURES["study-found"].body).protocolSection.eligibilityModule.eligibilityCriteria;
+const QUOTE = CRITERIA.split("\n").map((line) => line.replace(/^\s*(?:\d+\.|\*|-)\s*/, "").trim()).find((line) => line.length > 30);
+const EXPLAINER_REQUEST = `Study: ${STUDY_ID}. Visitor said: - age 54. Question: which criteria fit me?`;
+
+test("C1, C3: the front agent hands the explainer only its request; the explainer sees none of the chat", async () => {
+  const { page, node } = freshPage();
+  page.noticeAccepted = true;
+  const net = network();
+  const actions = await registry();
+  const model = new ScriptedModel([
+    { tool: "study_explainer", arguments: { request: EXPLAINER_REQUEST } },
+    { tool: "website_get_trial", arguments: { id: STUDY_ID } },
+    { tool: "website_show_eligibility_notes", arguments: { id: STUDY_ID, visitor_facts: ["Age 54"], notes: [
+      { criterion: QUOTE, status: "cannot_tell", why: "The visitor did not say." },
+    ] } },
+    { text: "One note shown: cannot tell. Ask the study team about it." },
+    { text: "I put a note on the page." },
+  ]);
+  const ctx = context(net, actions, model);
+  // Earlier chat that only the front agent may see.
+  ctx.history = [{ role: "user", content: "SECRET-EARLIER-TURN I have a heart condition" }, { role: "assistant", content: "Noted." }];
+  const result = await runAgent(ctx, ctx.frontMan, "Tell me which criteria fit me.", null, []);
+  assert.equal(result.text, "I put a note on the page.");
+
+  const front = model.calls[0];
+  assert.ok(JSON.stringify(front.messages).includes("SECRET-EARLIER-TURN"), "the front agent sees the chat");
+  const explainer = model.calls[1];
+  assert.ok(explainer.messages[0].content.includes("You help the Trial Finder assistant explain one clinical study's criteria."));
+  assert.equal(JSON.stringify(explainer.messages).includes("SECRET-EARLIER-TURN"), false, "the explainer sees none of the chat");
+  const userTurns = explainer.messages.filter((message) => message.role === "user").map((message) => message.content);
+  assert.deepEqual(userTurns, [EXPLAINER_REQUEST], "the explainer gets the request as plain text, and nothing else");
+  // The explainer's answer comes back to the front agent as a tool result.
+  assert.ok(model.calls[4].messages.some((message) => message.role === "tool" && message.content.includes("One note shown")));
+  // The note is on the page, under its fixed heading.
+  assert.equal(Object.keys(page.getState().notes).length, 1);
+  assert.equal(node("study-body").querySelectorAll("table").length, 1);
+});
+
+test("C6: the explainer's instructions define each state by what must be shown, with two to four examples", () => {
+  const instructions = network().getAgentSpec("study_explainer").instructions;
+  for (const definition of [
+    "- likely_meets: the record states it, and the visitor's facts plainly fit it.",
+    "- likely_does_not_meet: the record states it, and the visitor's facts plainly conflict with it. Do not soften this.",
+    "- cannot_tell: the visitor said nothing about it, said something unclear, or it needs a test result or a clinician to judge.",
+    "Never give a confidence score.",
+    "Use only those facts: you cannot see the chat. Never add facts of your own.",
+  ]) {
+    assert.ok(instructions.includes(definition), `the explainer must keep: ${definition}`);
+  }
+  const examples = instructions.slice(instructions.indexOf("Examples:")).split("\n").filter((line) => /^- (Record|Exclusion) /.test(line));
+  assert.ok(examples.length >= 2 && examples.length <= 4, `two to four examples, found ${examples.length}`);
+  // The hard cases: a criterion plainly failed, one nothing was said about, one in clinical shorthand.
+  assert.ok(examples.some((line) => line.includes("likely_does_not_meet")));
+  assert.ok(examples.some((line) => line.includes("cannot_tell") && line.includes("did not say")));
+  assert.ok(examples.some((line) => line.includes("FEV1")));
+  assert.ok(instructions.length < 5000, `explainer instructions are ${instructions.length} characters; the budget is 5,000`);
+});
+
+test("W5 through the runtime: notes before the study is fetched are refused; after the fetch they show", async () => {
+  const { page } = freshPage();
+  page.noticeAccepted = true;
+  const input = FIXTURES["search-asthma-boise"].input;
+  const notes = { id: STUDY_ID, notes: [{ criterion: QUOTE, status: "cannot_tell", why: "Not said." }] };
+  const { run, model } = await runScript([
+    { tool: "website_show_eligibility_notes", arguments: notes },
+    { tool: "website_search_trials", arguments: { condition: input.condition, place: input.place } },
+    { tool: "website_show_eligibility_notes", arguments: notes },
+    { tool: "website_get_trial", arguments: { id: STUDY_ID } },
+    { tool: "website_show_eligibility_notes", arguments: notes },
+    { text: "Done." },
+  ]);
+  await run;
+  const result = (call) => model.toolResults(call).at(-1).result;
+  assertRefusalBlock(result(1), "business");
+  assert.equal(result(2).ok, true, "the search ran");
+  assertRefusalBlock(result(3), "business");
+  assert.match(result(3).reason, /fetch/i, "seen in a search is not enough");
+  assert.equal(result(5).ok, true);
+  assert.equal(result(5).shown, 1);
+  assert.deepEqual(result(5).dropped, []);
+});
+
+test("C9 through the runtime: dropped items are named with a reason the model can act on", async () => {
+  const { page } = freshPage();
+  page.noticeAccepted = true;
+  const { run, model } = await runScript([
+    { tool: "website_get_trial", arguments: { id: STUDY_ID } },
+    { tool: "website_show_eligibility_notes", arguments: { id: STUDY_ID, notes: [
+      { criterion: QUOTE, status: "cannot_tell", why: "Not said." },
+      { criterion: "Must live within 20 miles of the clinic", status: "likely_meets", why: "The visitor lives nearby." },
+    ] } },
+    { text: "Done." },
+  ]);
+  await run;
+  const result = model.toolResults(2).at(-1).result;
+  assert.deepEqual(Object.keys(result).sort(), ["dropped", "next", "ok", "shown"]);
+  assert.equal(result.shown, 1);
+  assert.deepEqual(result.dropped.map((item) => item.criterion), ["Must live within 20 miles of the clinic"]);
+  assert.match(result.dropped[0].reason, /exact words/);
+  assert.match(result.next, /once/);
+});
+
+test("T6: when the explainer fails, the front agent is told and the conversation goes on", async () => {
+  const { page } = freshPage();
+  page.noticeAccepted = true;
+  const net = network();
+  const actions = await registry();
+  const calls = [];
+  // A model whose provider fails only while the explainer runs.
+  const model = {
+    async chat(request) {
+      calls.push(request);
+      if (request.messages[0].content.includes("You help the Trial Finder assistant explain")) throw new Error("provider down");
+      return calls.length === 1
+        ? { content: "", toolCalls: [{ id: "c1", type: "function", function: { name: "study_explainer", arguments: JSON.stringify({ request: EXPLAINER_REQUEST }) } }] }
+        : { content: "I could not read the study's criteria just now. Please try again.", toolCalls: [] };
+    },
+  };
+  const ctx = context(net, actions, model);
+  const result = await runAgent(ctx, ctx.frontMan, "Which criteria fit me?", null, []);
+  assert.equal(result.text, "I could not read the study's criteria just now. Please try again.");
+  const toolMessage = calls.at(-1).messages.filter((message) => message.role === "tool").at(-1).content;
+  assert.match(toolMessage, /study_explainer/);
+  assert.match(toolMessage, /provider down/);
+  assert.deepEqual(page.getState().notes, {}, "nothing half-done reached the page");
+});
+
+test("the shortlist through the runtime: add an id the page has shown, list it, remove it", async () => {
+  const { page, node } = freshPage();
+  page.noticeAccepted = true;
+  const input = FIXTURES["search-diabetes-boise"].input;
+  const first = JSON.parse(FIXTURES["search-diabetes-boise"].body).studies[0].protocolSection.identificationModule.nctId;
+  const { run, model } = await runScript([
+    { tool: "website_search_trials", arguments: { condition: input.condition, place: input.place } },
+    { tool: "website_shortlist", arguments: { change: "add", id: first } },
+    { tool: "website_shortlist", arguments: { change: "list" } },
+    { tool: "website_shortlist", arguments: { change: "add" } },
+    { tool: "website_shortlist", arguments: { change: "remove", id: first } },
+    { text: "Done." },
+  ]);
+  await run;
+  const result = (call) => model.toolResults(call).at(-1).result;
+  assert.deepEqual(result(2).shortlist.map((entry) => entry.id), [first]);
+  assert.deepEqual(result(3).shortlist.map((entry) => entry.id), [first]);
+  assertRefusalBlock(result(4), "validation");
+  assert.deepEqual(result(5).shortlist, []);
+  assert.equal(node("shortlist-empty").hidden, false);
 });
 
 // ---------------------------------------------------------------------------------

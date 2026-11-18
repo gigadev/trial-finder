@@ -72,7 +72,9 @@
     "bridge": "./bridge/action-bridge.html",
     "agentTools": [
       "search_trials",
-      "get_trial"
+      "get_trial",
+      "shortlist",
+      "show_eligibility_notes"
     ]
   }
 }

@@ -577,6 +577,100 @@ test("the menu at the top always has search, the assistant and the shortlist, an
 });
 
 // ---------------------------------------------------------------------------------
+// Notes on the criteria (W2, W5, C8, C10)
+// ---------------------------------------------------------------------------------
+
+const RECORD_CRITERIA = JSON.parse(FIXTURES["study-found"].body).protocolSection.eligibilityModule.eligibilityCriteria;
+/** A real line from the recorded criteria, so the quote is in the record. */
+const REAL_LINE = RECORD_CRITERIA.split("\n").map((line) => line.replace(/^\s*(?:\d+\.|\*|-)\s*/, "").trim()).find((line) => line.length > 30);
+
+test("W5: notes are refused until the page has fetched that study, and a bad id sends nothing", async () => {
+  const { page, node, requests } = await readyPage();
+  const notes = { notes: [{ criterion: REAL_LINE, status: "cannot_tell", why: "The visitor did not say." }] };
+  assertRefusal(page.showEligibilityNotes("NCT123", notes), "validation");
+  // Seen in a search is not enough: the criteria come only with a fetch.
+  await page.searchStudies(ASTHMA);
+  const before = page.getState();
+  const refused = page.showEligibilityNotes(STUDY_ID, notes);
+  assertRefusal(refused, "business");
+  assert.match(refused.reason, /fetch/i);
+  assert.deepEqual(page.getState(), before, "a refusal changes nothing");
+  assert.equal(requests.some((url) => url.includes(`/studies/${STUDY_ID}?`)), false, "notes never fetch anything themselves");
+  await page.openStudy(STUDY_ID);
+  assert.equal(page.showEligibilityNotes(STUDY_ID, notes).ok, true);
+  assert.equal(node("study-body").querySelectorAll("table").length, 1);
+});
+
+test("W2, C10: notes show under a fixed heading and disclaimer, in three fixed states, with the study and its date", async () => {
+  const { page, node } = await readyPage();
+  await page.openStudy(STUDY_ID);
+  const result = page.showEligibilityNotes(STUDY_ID, {
+    facts: ["Age 54", "Has had asthma for 3 years"],
+    notes: [
+      { criterion: REAL_LINE, status: "likely_meets", why: "The visitor said they are 54." },
+      { criterion: REAL_LINE.slice(0, 40), status: "cannot_tell", why: "Not said." },
+    ],
+  });
+  assert.equal(result.ok, true);
+  const block = node("study-body").querySelectorAll("section").find((section) => section.className === "notes");
+  assert.ok(block, "the notes block is in the study's details");
+  const headings = block.querySelectorAll("h4").map((h) => h.textContent);
+  assert.deepEqual(headings, [WORDING.notesHeading]);
+  assert.equal(block.querySelectorAll("p")[0].textContent, WORDING.notesDisclaimer);
+  const rows = block.querySelectorAll("tbody")[0].children;
+  assert.deepEqual(rows.map((row) => row.children.map((cell) => cell.textContent)), [
+    [REAL_LINE, "Likely meets", "The visitor said they are 54."],
+    [REAL_LINE.slice(0, 40), "Cannot tell: ask the study team", "Not said."],
+  ]);
+  assert.deepEqual(block.querySelectorAll("li").map((li) => li.textContent), ["Age 54", "Has had asthma for 3 years"]);
+  const raw = JSON.parse(FIXTURES["study-found"].body).protocolSection;
+  assert.ok(textOf(block).includes(`study ${STUDY_ID}, record last updated ${raw.statusModule.lastUpdatePostDateStruct.date}`));
+  // The criteria are still shown whole, word for word, beside the notes.
+  assert.equal(node("study-body").querySelectorAll("pre")[1].textContent, RECORD_CRITERIA);
+});
+
+test("C8: a note whose criterion is not in the record, or that gives a verdict, never reaches the page", async () => {
+  const { page, node } = await readyPage();
+  await page.openStudy(STUDY_ID);
+  const result = page.showEligibilityNotes(STUDY_ID, {
+    notes: [
+      { criterion: REAL_LINE, status: "cannot_tell", why: "The visitor did not say." },
+      { criterion: "Must have lived in Idaho for 5 years", status: "likely_meets", why: "The visitor lives in Boise." },
+      { criterion: REAL_LINE, status: "likely_meets", why: "You qualify on this point." },
+    ],
+  });
+  assert.equal(result.shown, 1);
+  assert.deepEqual(result.dropped.map((item) => item.reason), ["not_in_record", "verdict"]);
+  const text = textOf(node("study-body"));
+  assert.equal(text.includes("Must have lived in Idaho"), false);
+  assert.equal(text.includes("You qualify"), false);
+  // Nothing surviving is a refusal, and the page keeps what it showed before.
+  const before = page.getState();
+  assertRefusal(page.showEligibilityNotes(STUDY_ID, { notes: [{ criterion: "Must have lived in Idaho for 5 years", status: "likely_meets", why: "Lives in Boise." }] }), "validation");
+  assert.deepEqual(page.getState(), before);
+});
+
+test("W1: the visitor can remove the notes with the page's own button", async () => {
+  const { page, node } = await readyPage();
+  await page.openStudy(STUDY_ID);
+  page.showEligibilityNotes(STUDY_ID, { notes: [{ criterion: REAL_LINE, status: "cannot_tell", why: "Not said." }] });
+  clickButton(node("study-body"), "Remove these notes");
+  assert.deepEqual(page.getState().notes, {});
+  assert.equal(node("study-body").querySelectorAll("table").length, 0);
+  assertRefusal(page.clearNotes(STUDY_ID), "business");
+});
+
+test("notes on one study open that study's details, and stay with it when another opens", async () => {
+  const { page, node } = await readyPage();
+  await page.openStudy(STUDY_ID);
+  page.closeStudy();
+  assert.equal(node("study").hidden, true);
+  page.showEligibilityNotes(STUDY_ID, { notes: [{ criterion: REAL_LINE, status: "cannot_tell", why: "Not said." }] });
+  assert.equal(node("study").hidden, false);
+  assert.equal(page.getState().study.id, STUDY_ID);
+});
+
+// ---------------------------------------------------------------------------------
 // Fixed wording
 // ---------------------------------------------------------------------------------
 

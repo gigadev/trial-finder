@@ -20,6 +20,7 @@
 // is typing somewhere else.
 
 import * as trialsApi from "./trials-api.js";
+import { checkNotes, STATUS_WORDS as NOTE_WORDS } from "./guard.js";
 
 export const MAX_SHORTLIST = 10;
 export const MAX_QUESTIONS = 12;
@@ -36,6 +37,9 @@ export const WORDING = Object.freeze({
   criteriaNote: "This text is copied from the study's record without changes. Only the study team can say whether you can take part.",
   nothingMatches: "No studies match this search. That can change: new studies are added often. You could try a wider place, other words for the condition, or include studies that are not recruiting yet.",
   sheetIntro: "Take this sheet to your doctor or to the study team. It lists the studies you chose and questions you may want to ask.",
+  notesHeading: "AI-written notes on the criteria: not a decision",
+  notesDisclaimer: "An AI wrote these notes from the study's criteria and what you said. They can be wrong. Only the study team can say whether you can take part.",
+  notesFacts: "Based on what you said:",
 });
 
 /** Questions printed on every sheet. */
@@ -58,6 +62,8 @@ const REASONS = Object.freeze({
   shortlistFull: `The shortlist holds at most ${MAX_SHORTLIST} studies. Remove one first.`,
   badChange: "A shortlist change must be \"add\" or \"remove\".",
   idShape: "A study id is the letters NCT followed by 8 digits, such as NCT01234567.",
+  notFetched: "That study's record has not been fetched on this page. Fetch the study first, then add notes on its criteria.",
+  noNotes: "There are no notes on that study to remove.",
   emptyShortlist: "The shortlist is empty. Add a study before making the sheet.",
   badQuestions: `Questions must be a list of at most ${MAX_QUESTIONS} short lines of text, each at most ${MAX_QUESTION_LENGTH} characters.`,
 });
@@ -137,6 +143,7 @@ export class TrialFinderPage {
     this.dataDate = null;
     this.known = new Map();
     this.records = new Map();
+    this.notes = new Map();
     this.nodes = {};
     for (const id of ["search-form", "condition", "place", "age", "sex", "recruiting-only", "search-error",
       "search-button", "notice", "notice-heading", "notice-continue", "notice-decline", "status", "results",
@@ -165,6 +172,7 @@ export class TrialFinderPage {
       shortlist: this.shortlist,
       sheet: this.sheet,
       dataDate: this.dataDate,
+      notes: Object.fromEntries(this.notes),
     });
   }
 
@@ -323,6 +331,39 @@ export class TrialFinderPage {
   }
 
   // -------------------------------------------------------------------------------
+  // Notes on the criteria (written by the agent, checked by guard.js)
+  // -------------------------------------------------------------------------------
+
+  /**
+   * Show notes on one study's criteria, under a fixed heading and disclaimer.
+   *
+   * Refused until this page has fetched that study's record (W5). Each note's criterion
+   * must be in that record's criteria text, and no note may give a verdict; the rest are
+   * dropped and named (C8, C9). The study's details open with the notes in them.
+   *
+   * input: { facts?: string[], notes: { criterion, status, why }[] }, as guard.js takes.
+   */
+  showEligibilityNotes(id, input) {
+    if (!this.api.isNctId(id)) return refuse("validation", false, REASONS.idShape);
+    const record = this.records.get(id);
+    if (!record) return refuse("business", false, REASONS.notFetched);
+    const checked = checkNotes(input, record.criteria);
+    if (!checked.ok) return checked;
+    this.notes.set(id, { facts: checked.facts, items: checked.kept, droppedCount: checked.dropped.length });
+    this.study = { status: "open", id, record, message: "" };
+    this.changed();
+    return { ok: true, shown: checked.kept.length, dropped: checked.dropped };
+  }
+
+  /** Remove the notes on one study. The visitor's own button calls this (W1). */
+  clearNotes(id) {
+    if (!this.notes.has(id)) return refuse("business", false, REASONS.noNotes);
+    this.notes.delete(id);
+    this.changed();
+    return { ok: true };
+  }
+
+  // -------------------------------------------------------------------------------
   // Shortlist
   // -------------------------------------------------------------------------------
 
@@ -347,6 +388,11 @@ export class TrialFinderPage {
       this.shortlist = this.shortlist.filter((entry) => entry.id !== id);
     }
     this.changed();
+    return this.listShortlist();
+  }
+
+  /** The shortlist, as ids and titles. Changes nothing. */
+  listShortlist() {
     return { ok: true, shortlist: this.shortlist.map((entry) => ({ id: entry.id, title: entry.title })) };
   }
 
@@ -511,6 +557,40 @@ export class TrialFinderPage {
     );
   }
 
+  /**
+   * The notes on one study's criteria, if there are any. The heading, the disclaimer, the
+   * state words, the column names and the source line are fixed here; only the quoted
+   * criterion (checked against the record), the facts and the why come from the model,
+   * and they are set as text.
+   */
+  notesBlock(study) {
+    const notes = this.notes.get(study.id);
+    if (!notes) return null;
+    const head = this.make("tr");
+    head.append(this.make("th", "The study's words"), this.make("th", "Note"), this.make("th", "Why"));
+    const body = this.make("tbody");
+    for (const item of notes.items) {
+      const row = this.make("tr", undefined, `note-${item.status.replace(/_/g, "-")}`);
+      row.append(this.make("td", item.criterion), this.make("td", NOTE_WORDS[item.status]), this.make("td", item.why));
+      body.append(row);
+    }
+    const table = this.make("table", undefined, "notes-table");
+    table.append(this.box("thead", undefined, head), body);
+    const facts = notes.facts.length
+      ? this.box("div", "notes-facts", this.make("p", WORDING.notesFacts), this.box("ul", undefined, ...notes.facts.map((fact) => this.make("li", fact))))
+      : null;
+    return this.box(
+      "section",
+      "notes",
+      this.make("h4", WORDING.notesHeading),
+      this.make("p", WORDING.notesDisclaimer, "notes-disclaimer"),
+      facts,
+      table,
+      this.make("p", `These notes refer to study ${study.id}, record last updated ${study.lastUpdated || "date not stated"}.`, "source"),
+      this.box("div", "button-row", this.button("Remove these notes", () => { this.clearNotes(study.id); })),
+    );
+  }
+
   contactBlock(study) {
     if (!study.contacts.length) return null;
     const list = this.make("ul");
@@ -614,6 +694,7 @@ export class TrialFinderPage {
         this.make("p", record.id, "study-id"),
         this.factList(record),
         this.box("div", "summary", this.make("h4", "What the study is about, in the study's own words"), this.make("pre", record.summary || "This record has no summary.", "criteria")),
+        this.notesBlock(record),
         this.criteriaBlock(record),
         this.siteBlock(record),
         this.contactBlock(record),

@@ -479,6 +479,37 @@ Settled while building:
   The consent-card handling from the skill's `site.js` is left out until task 7, when
   there is a partner to consent to.
 
+### B16. Task 5: what was settled
+
+- **A state is about the study's requirement on that point,** not about the criterion's
+  words. For an exclusion such as "Current smoker", a visitor who smokes is
+  `likely_does_not_meet`. The explainer's instructions say so, with an example.
+- **Code drops an explanation that gives a verdict,** beyond the handoff's enum and fixed
+  heading: any "why" or fact with "qualify", "eligible" or "ineligible", "you can (not)
+  join / take part / enrol", "you will be accepted", or "you should". This can drop a
+  harmless sentence that quotes the word "eligible"; the model is told why and can
+  rephrase. Wording a visitor reads should never carry those words anyway (HANDOFF §10).
+- **A quote must be at least 12 characters after normalising,** so "18" or "asthma"
+  cannot match by accident. Part of a criterion is accepted if it is long enough.
+- **Seen in a search is not enough for notes:** the study must have been fetched on this
+  page, because only a fetch brings its criteria (W5). Any id a search or fetch showed
+  can go on the shortlist.
+- **Sending notes for a study again replaces them.** The instructions say to correct
+  dropped items once and send the whole list. The limit of one correction is in the
+  instructions only; code does not count attempts.
+- **Notes live in page memory,** in the study's details above its criteria, with a
+  button to remove them. They are gone on reload, like everything else (D1).
+- **The shortlist action is named `shortlist`** and takes add, remove or list.
+- **The front agent's instructions are 4,703 of the 5,000 characters** the checker
+  allows; the explainer's are 4,439. Little room is left for task 6.
+- **A slip from version 0.4.3 was found and fixed:** removing the notice line had
+  joined two instructions onto one line. It passed Scott's test; the lines are separate
+  again in 0.5.0.
+- **Not tried with a real model.** Task 5 has no stop for Scott. The scripted tests
+  prove the code rules; whether the model picks good criteria and states is for the
+  eval in task 9. A quick try is welcome: search, open a study, then ask "I am 54 and
+  have had asthma for 3 years. Which of its criteria fit me?"
+
 ---
 
 ## C. Decisions waiting on Scott
