@@ -40,6 +40,8 @@ export const WORDING = Object.freeze({
   notesHeading: "AI-written notes on the criteria: not a decision",
   notesDisclaimer: "An AI wrote these notes from the study's criteria and what you said. They can be wrong. Only the study team can say whether you can take part.",
   notesFacts: "Based on what you said:",
+  sheetCannotTell: "Points to ask the study team about",
+  sheetCannotTellNote: "An AI could not tell these from what you said. They are the study's own words.",
 });
 
 /** Questions printed on every sheet. */
@@ -62,6 +64,8 @@ const REASONS = Object.freeze({
   shortlistFull: `The shortlist holds at most ${MAX_SHORTLIST} studies. Remove one first.`,
   badChange: "A shortlist change must be \"add\" or \"remove\".",
   idShape: "A study id is the letters NCT followed by 8 digits, such as NCT01234567.",
+  tooManyQuestions: `The sheet holds at most ${MAX_QUESTIONS} added questions. Remove some on the sheet first.`,
+  noSuchQuestion: "There is no such question on the sheet.",
   notFetched: "That study's record has not been fetched on this page. Fetch the study first, then add notes on its criteria.",
   noNotes: "There are no notes on that study to remove.",
   emptyShortlist: "The shortlist is empty. Add a study before making the sheet.",
@@ -401,23 +405,31 @@ export class TrialFinderPage {
   // -------------------------------------------------------------------------------
 
   /**
-   * Build the printable sheet from the shortlist.
+   * Build the printable sheet from the shortlist, or bring it up to date.
    *
-   * input.questions: optional list of the visitor's own questions.
+   * input.questions: optional questions to add, from the visitor or the agent. They are
+   * added to the questions already on the sheet, without repeats; each one can be removed
+   * with its own button (W1). The sheet holds at most MAX_QUESTIONS of them.
    * Each shortlisted study's record is fetched if this page has not fetched it yet. A
    * study whose record could not be fetched is named on the sheet as missing; it is not
-   * left out silently.
+   * left out silently. "Cannot tell" points from the AI notes go on the sheet as things
+   * to ask the study team.
    */
   async buildSheet(input) {
-    const questions = [];
+    const added = [];
     const given = input?.questions ?? [];
     if (!Array.isArray(given) || given.length > MAX_QUESTIONS) return refuse("validation", false, REASONS.badQuestions);
     for (const item of given) {
       if (typeof item !== "string" || item.length > MAX_QUESTION_LENGTH) return refuse("validation", false, REASONS.badQuestions);
       const line = item.replace(/\s+/g, " ").trim();
-      if (line) questions.push(line);
+      if (line) added.push(line);
     }
     if (this.shortlist.length === 0) return refuse("business", false, REASONS.emptyShortlist);
+    const questions = [...this.sheet.questions];
+    for (const line of added) {
+      if (!questions.some((existing) => existing.toLowerCase() === line.toLowerCase())) questions.push(line);
+    }
+    if (questions.length > MAX_QUESTIONS) return refuse("business", false, REASONS.tooManyQuestions);
     const ids = this.shortlist.map((entry) => entry.id);
     const missing = [];
     for (const id of ids) {
@@ -437,6 +449,16 @@ export class TrialFinderPage {
     };
     this.changed();
     return { ok: true, studies: this.sheet.studies, missing: this.sheet.missing, questions };
+  }
+
+  /** Remove one of the added questions from the sheet. The sheet's own buttons call this (W1). */
+  removeSheetQuestion(index) {
+    if (!Number.isInteger(index) || index < 0 || index >= this.sheet.questions.length) {
+      return refuse("validation", false, REASONS.noSuchQuestion);
+    }
+    this.sheet = { ...this.sheet, questions: this.sheet.questions.filter((unused, at) => at !== index) };
+    this.changed();
+    return { ok: true, questions: [...this.sheet.questions] };
   }
 
   closeSheet() {
@@ -591,6 +613,19 @@ export class TrialFinderPage {
     );
   }
 
+  /** On the sheet: the "cannot tell" points from the AI notes on this study, if any. */
+  cannotTellBlock(study) {
+    const items = (this.notes.get(study.id)?.items ?? []).filter((item) => item.status === "cannot_tell");
+    if (!items.length) return null;
+    return this.box(
+      "div",
+      "cannot-tell",
+      this.make("h4", WORDING.sheetCannotTell),
+      this.make("p", WORDING.sheetCannotTellNote, "hint"),
+      this.box("ul", undefined, ...items.map((item) => this.make("li", item.criterion))),
+    );
+  }
+
   contactBlock(study) {
     if (!study.contacts.length) return null;
     const list = this.make("ul");
@@ -731,6 +766,7 @@ export class TrialFinderPage {
         this.make("h3", record.title || "Title not stated"),
         this.make("p", record.id, "study-id"),
         this.factList(record),
+        this.cannotTellBlock(record),
         this.criteriaBlock(record),
         this.siteBlock(record),
         this.contactBlock(record),
@@ -738,10 +774,14 @@ export class TrialFinderPage {
       ));
     }
     for (const id of this.sheet.missing) {
-      parts.push(this.make("p", `The record for study ${id} could not be fetched, so it is not on this sheet. Try "Update the sheet" in a moment.`, "site-warning"));
+      parts.push(this.make("p", `The record for study ${id} could not be fetched, so it is not on this sheet. Press "Add to the sheet" in a moment to try again.`, "site-warning"));
     }
     const questions = this.make("ol");
-    for (const line of [...this.sheet.questions, ...STANDARD_QUESTIONS]) questions.append(this.make("li", line));
+    this.sheet.questions.forEach((line, index) => {
+      const remove = this.button(`Remove question ${index + 1}`, () => { this.removeSheetQuestion(index); }, "no-print small");
+      questions.append(this.box("li", "added-question", this.make("span", line), remove));
+    });
+    for (const line of STANDARD_QUESTIONS) questions.append(this.make("li", line));
     parts.push(this.box("div", "questions", this.make("h3", "Questions to ask"), questions));
     const processed = this.dataDate ? ` ClinicalTrials.gov last processed its data on ${dateOnly(this.dataDate.dataTimestamp)}.` : "";
     parts.push(this.make("p", `${WORDING.source}.${processed} ${WORDING.notAffiliated}`, "source"));
@@ -797,6 +837,8 @@ export class TrialFinderPage {
       nodes["sheet-error"].hidden = true;
       nodes["shortlist-error"].hidden = true;
       if (result.ok) {
+        // The typed questions are on the sheet now, each with its own remove button.
+        nodes["sheet-questions"].value = "";
         nodes["sheet-heading"].focus();
       } else {
         errorNode.textContent = result.reason;

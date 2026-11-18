@@ -94,6 +94,23 @@ export function givesVerdict(text) {
   return VERDICTS.some((pattern) => pattern.test(String(text ?? "")));
 }
 
+const SHEET_STATEMENTS = [
+  /\byou\s+(?:do\s+)?(?:qualify|meet\s+the\s+criteria)\b/i,
+  /\byou(?:'re|\s+are)\s+(?:not\s+)?(?:eligible|ineligible)\b/i,
+  /\byou\s+should\b/i,
+];
+
+/**
+ * True when text the agent wants on the printed sheet is a question that states no
+ * verdict. "Am I eligible?" is a fair question for a doctor; "You qualify?" is a verdict
+ * dressed as one. The visitor's own typed questions are not checked: they are theirs.
+ */
+export function isSheetQuestion(text) {
+  const line = tidy(text ?? "");
+  if (!line.endsWith("?")) return false;
+  return !SHEET_STATEMENTS.some((pattern) => pattern.test(line));
+}
+
 /**
  * Check the notes the model asks the page to show for one study.
  *

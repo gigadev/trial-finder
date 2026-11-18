@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Where the data comes from: Trial Finder</title>
+  <meta name="description" content="Trial Finder's data comes from ClinicalTrials.gov. This page says what the site shows and exactly what it changes.">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to the page</a>
+
+  <p class="emergency">If this is an emergency, call your local emergency number.</p>
+
+  <header class="site-header">
+    <p class="site-name"><a href="./index.html">Trial Finder</a></p>
+    <p class="site-tagline">Find clinical studies, read who they are for, and prepare questions for your doctor.</p>
+  </header>
+
+  <nav class="page-menu" aria-label="Pages">
+    <ul id="jump-list">
+      <li><a href="./index.html">Search</a></li>
+      <li><a href="./about.html">About</a></li>
+      <li><a href="./ai.html">How the AI works</a></li>
+      <li><a href="./not-medical-advice.html">Not medical advice</a></li>
+      <li><a href="./data.html" aria-current="page">Data source</a></li>
+    </ul>
+  </nav>
+
+  <main id="main">
+    <article class="panel prose">
+      <h1>Where the data comes from</h1>
+      <p class="not-advice">This is information, not medical advice. It cannot tell you whether you can join a study. Ask your doctor or the study team.</p>
+
+      <h2>The source</h2>
+      <p>Every study on this site comes from <strong>ClinicalTrials.gov</strong>, a database of the U.S. Government run by the U.S. National Library of Medicine. Trial Finder fetches the records when you search, through ClinicalTrials.gov's public data service. It keeps no copy: nothing is stored once you close or reload the page.</p>
+      <p>Each study shows its own link to ClinicalTrials.gov and the date its record was last updated. The results also show the date ClinicalTrials.gov last processed its data.</p>
+      <p>Trial Finder is not affiliated with or endorsed by the U.S. National Institutes of Health, the National Library of Medicine or ClinicalTrials.gov, and claims no rights in their data. Use of the data follows ClinicalTrials.gov's <a href="https://clinicaltrials.gov/about-site/terms-conditions" rel="noopener noreferrer">terms and conditions</a>.</p>
+
+      <h2>What a listing means</h2>
+      <p>The sponsor or investigator of each study writes its record and is responsible for it being accurate and following the law. The U.S. government does not review or approve the safety or the science of every study listed, and it does not run or pay for all of them. A study being on ClinicalTrials.gov, or on this site, does not mean it has been evaluated by the U.S. government. This is our summary; ClinicalTrials.gov's own <a href="https://clinicaltrials.gov/about-site/disclaimer" rel="noopener noreferrer">disclaimer</a> says it in full.</p>
+
+      <h2 id="what-we-change">What this site shows, and what it changes</h2>
+      <p>The terms ask anyone who publishes this data to say what they changed. Here is all of it.</p>
+
+      <h3>Shown from the record without changes</h3>
+      <ul>
+        <li>Each study's id, title, overall status, phase, conditions, age limits, sex, and the date its record was last updated.</li>
+        <li>The study's summary and its rules about who can take part (its eligibility criteria), word for word.</li>
+        <li>The study's central contact, as listed. It is shown so you can contact the team yourself. It is never sent anywhere or used for anything else, and the AI assistant is not given it.</li>
+        <li>For each site: its name, city, state, zip code, country and its own recruiting status.</li>
+      </ul>
+
+      <h3>Not shown</h3>
+      <p>Everything else in the record, such as the study's design, its outcomes, its results and the contacts at each site. Each study's link leads to the full record.</p>
+
+      <h3>Changed or added by this site</h3>
+      <ul>
+        <li><strong>Searches show recruiting studies only,</strong> unless you untick that box. Results come 10 at a time, sorted by how well they match.</li>
+        <li><strong>The place you type is tidied before the search:</strong> words like "near" or "within 50 miles of" are left out, and "USA" is written "United States", because ClinicalTrials.gov needs every place word to match a site's address. The page says what was searched.</li>
+        <li><strong>Age and sex filters keep studies that state no limit.</strong></li>
+        <li><strong>Site lists are filtered and shortened:</strong> only sites whose own status is recruiting are listed, at most 5 per study, with a count of all sites and of recruiting ones. A site in your city that is not recruiting is named with its status, not listed as a place to go.</li>
+        <li><strong>Sites are put in order:</strong> when a study lists a site in the city you named, the others are ordered by straight-line distance from that site, using the coordinates in the record, shown in whole miles. These are not travel distances. Otherwise they are ordered by whether their state or country matches what you typed. No other service is asked where a place is.</li>
+        <li><strong>Status and phase are written in plain words,</strong> such as "Not yet recruiting" for NOT_YET_RECRUITING.</li>
+        <li><strong>AI-written notes and explanations are not part of the record.</strong> The notes beside a study's rules, and anything the assistant says in the chat, are written by an AI from the record and from what you told it. They are labelled as AI-written. They may be wrong.</li>
+        <li><strong>Your sheet for the doctor</strong> adds a fixed list of standard questions, any questions you or the assistant add, and the points the AI notes could not tell. Each is labelled.</li>
+      </ul>
+
+      <h2>When the data source does not answer</h2>
+      <p>If ClinicalTrials.gov does not answer, the page says so plainly. It never shows an empty result in place of a failure, and it does not retry by itself.</p>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <p>Trial Finder is not affiliated with or endorsed by the U.S. National Institutes of Health, the National Library of Medicine or ClinicalTrials.gov. A study being listed there does not mean the U.S. government has reviewed or approved it.</p>
+    <p>This site has no accounts and no server. It stores nothing about you.</p>
+  </footer>
+</body>
+</html>

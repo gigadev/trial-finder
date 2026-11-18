@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>About Trial Finder</title>
+  <meta name="description" content="What Trial Finder is, what it does, and what it does not do.">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to the page</a>
+
+  <p class="emergency">If this is an emergency, call your local emergency number.</p>
+
+  <header class="site-header">
+    <p class="site-name"><a href="./index.html">Trial Finder</a></p>
+    <p class="site-tagline">Find clinical studies, read who they are for, and prepare questions for your doctor.</p>
+  </header>
+
+  <nav class="page-menu" aria-label="Pages">
+    <ul id="jump-list">
+      <li><a href="./index.html">Search</a></li>
+      <li><a href="./about.html" aria-current="page">About</a></li>
+      <li><a href="./ai.html">How the AI works</a></li>
+      <li><a href="./not-medical-advice.html">Not medical advice</a></li>
+      <li><a href="./data.html">Data source</a></li>
+    </ul>
+  </nav>
+
+  <main id="main">
+    <article class="panel prose">
+      <h1>About Trial Finder</h1>
+      <p class="not-advice">This is information, not medical advice. It cannot tell you whether you can join a study. Ask your doctor or the study team.</p>
+
+      <h2>What it is</h2>
+      <p>Trial Finder helps patients and the people who care for them look for clinical studies. A clinical study tests a treatment, or a way of caring for people, with volunteers.</p>
+      <p>It searches the public records on ClinicalTrials.gov, the U.S. database of clinical studies. Those records are written for researchers. Trial Finder shows them in plain words and keeps each study's own rules, word for word, beside them.</p>
+
+      <h2>What you can do here</h2>
+      <ul>
+        <li>Search by condition and place, and narrow by age and sex if you wish.</li>
+        <li>Read each study's details and its rules about who can take part, exactly as the study wrote them.</li>
+        <li>Keep a shortlist while the page is open.</li>
+        <li>Print a sheet of the studies you chose and questions to take to your doctor or the study team.</li>
+        <li>Ask the assistant, in your own words, to do any of this for you. It runs on your own AI provider key. <a href="./ai.html">How the AI works here</a> explains what it sends and where.</li>
+      </ul>
+      <p>The search form works without the assistant and without any key.</p>
+
+      <h2>What it does not do</h2>
+      <ul>
+        <li>It does not decide whether you can take part in a study. Only the study team can, after their own checks.</li>
+        <li>It does not give medical advice. See <a href="./not-medical-advice.html">Not medical advice</a>.</li>
+        <li>It does not contact anyone, send messages, sign you up or book anything.</li>
+        <li>It has no accounts and no server of its own, and it stores nothing about you. Everything on the page is gone when you close or reload it.</li>
+      </ul>
+
+      <h2>An open agentic website</h2>
+      <p>Trial Finder was made for the Open Agentic Web Challenge, as a personal entry. Its AI assistant runs in your browser, not on a server, and its instructions are public: <a href="./trial_finder.network.json">read the assistant's instructions</a>. Other sites' assistants may ask it what it offers; they get a short answer and a pointer to this site, not its search.</p>
+      <p>The source code is public under the Apache License 2.0. It uses the challenge's open browser runtime, unchanged.</p>
+
+      <h2>Where the data comes from</h2>
+      <p>Every study comes from ClinicalTrials.gov, fetched when you search. Trial Finder is not affiliated with or endorsed by the U.S. National Institutes of Health, the National Library of Medicine or ClinicalTrials.gov. See <a href="./data.html">where the data comes from</a> for what this site shows and changes.</p>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <p>Trial Finder is not affiliated with or endorsed by the U.S. National Institutes of Health, the National Library of Medicine or ClinicalTrials.gov. A study being listed there does not mean the U.S. government has reviewed or approved it.</p>
+    <p>This site has no accounts and no server. It stores nothing about you.</p>
+  </footer>
+</body>
+</html>

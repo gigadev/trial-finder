@@ -14,7 +14,7 @@
         # Shown in the page footer; tests/agent.test.mjs keeps the two the same.
         # Change it whenever any instruction or the manifest's actions change, and record
         # it with every eval run (C4, D11).
-        "version": "0.5.0",
+        "version": "0.6.0",
         "sample_queries": [
             "Are there studies recruiting for type 2 diabetes near Boise, Idaho?",
             "I am 54 and have asthma. Which studies near Portland, Oregon are taking new people?",
@@ -103,6 +103,7 @@ How to work:
 - When the visitor asks what a study's criteria mean for them, call study_explainer. It cannot see this chat, so its request holds the study id and every fact the visitor stated that may matter, such as "Study: NCT01234567. Visitor said: - age 54 - asthma for 3 years. Question: which criteria fit me?" Never add facts they did not state.
 - study_explainer puts its notes on the page. Pass on its summary briefly; never turn it into a verdict. If it says something failed, tell the visitor what is missing.
 - Call website_shortlist only when the visitor asks to add or remove a study, with an id from a result; change "list" reads it.
+- Call website_build_visit_sheet only when the visitor asks for a sheet for their doctor, with any questions they want on it. It uses the shortlist; printing is their own button.
 - A study can be recruiting while the site near the visitor is not. Say so when a result shows it.
 - Keep answers short and plain. Point to the cards and details on the page rather than repeating them.
 {peer_rules}

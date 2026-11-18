@@ -412,7 +412,10 @@ test("the sheet: shortlisted studies with criteria word for word, questions, sou
   const criteria = node("sheet-body").querySelectorAll("pre");
   assert.equal(criteria.length, 1);
   assert.equal(criteria[0].textContent, raw.eligibilityModule.eligibilityCriteria);
-  const questions = node("sheet-body").querySelectorAll("ol")[0].children.map((li) => li.textContent);
+  const items = node("sheet-body").querySelectorAll("ol")[0].children;
+  // An added question sits in a span beside its own remove button; a standard one is plain text.
+  const questions = items.map((li) => (li.children.length ? li.children[0].textContent : li.textContent));
+  assert.deepEqual(items.slice(0, 2).map((li) => li.children[1].textContent), ["Remove question 1", "Remove question 2"]);
   assert.deepEqual(questions, ["Can I bring my daughter?", "What happens at the first visit?", ...STANDARD_QUESTIONS]);
   const text = textOf(node("sheet-body"));
   assert.ok(text.includes(WORDING.source));
@@ -450,6 +453,60 @@ test("the sheet names a study whose record could not be fetched; it is not dropp
   const text = textOf(node("sheet-body"));
   assert.ok(text.includes(`The record for study ${id} could not be fetched`));
   assert.equal(node("sheet-body").querySelectorAll("pre").length, 0);
+});
+
+test("W1: questions are added to the sheet without repeats, and each can be removed", async () => {
+  const { page, node } = await readyPage();
+  await page.searchStudies(ASTHMA);
+  page.updateShortlist(STUDY_ID, "add");
+  await page.buildSheet({ questions: ["How long does it last?"] });
+  const second = await page.buildSheet({ questions: ["how long does it last?", "Is parking paid for?"] });
+  assert.deepEqual(second.questions, ["How long does it last?", "Is parking paid for?"]);
+  clickButton(node("sheet-body"), "Remove question 1");
+  assert.deepEqual(page.getState().sheet.questions, ["Is parking paid for?"]);
+  assertRefusal(page.removeSheetQuestion(5), "validation");
+  // The sheet holds at most 12 added questions; past that, nothing changes.
+  const many = Array.from({ length: MAX_QUESTIONS }, (unused, index) => `Question ${index}?`);
+  const before = page.getState();
+  assertRefusal(await page.buildSheet({ questions: many }), "business");
+  assert.deepEqual(page.getState(), before);
+});
+
+test("the sheet's question box adds what was typed, then empties", async () => {
+  const { page, node } = await readyPage();
+  await page.searchStudies(ASTHMA);
+  page.updateShortlist(STUDY_ID, "add");
+  node("sheet-questions").value = "First question?\n\nSecond question?";
+  node("make-sheet").dispatch("click");
+  await settle();
+  await settle();
+  assert.deepEqual(page.getState().sheet.questions, ["First question?", "Second question?"]);
+  assert.equal(node("sheet-questions").value, "");
+});
+
+test("the sheet lists the AI's cannot-tell points as things to ask, labelled, and nothing else from the notes", async () => {
+  const { page, node } = await readyPage();
+  await page.searchStudies(ASTHMA);
+  await page.openStudy(STUDY_ID);
+  const raw = JSON.parse(FIXTURES["study-found"].body).protocolSection.eligibilityModule.eligibilityCriteria;
+  const lines = raw.split("\n").map((line) => line.replace(/^\s*(?:\d+\.|\*|-)\s*/, "").trim()).filter((line) => line.length > 30);
+  page.showEligibilityNotes(STUDY_ID, { notes: [
+    { criterion: lines[0], status: "likely_meets", why: "The visitor said so." },
+    { criterion: lines[1], status: "cannot_tell", why: "Not said." },
+    { criterion: lines[2], status: "likely_does_not_meet", why: "The visitor said otherwise." },
+  ] });
+  page.updateShortlist(STUDY_ID, "add");
+  await page.buildSheet();
+  const block = node("sheet-body").querySelectorAll("div").find((div) => div.className === "cannot-tell");
+  assert.ok(block);
+  assert.equal(block.querySelectorAll("h4")[0].textContent, WORDING.sheetCannotTell);
+  assert.equal(block.querySelectorAll("p")[0].textContent, WORDING.sheetCannotTellNote);
+  assert.deepEqual(block.querySelectorAll("li").map((li) => li.textContent), [lines[1]]);
+  // The verdict-shaped states and the AI's reasons do not go on the sheet.
+  const text = textOf(node("sheet-body"));
+  assert.equal(text.includes("Likely meets"), false);
+  assert.equal(text.includes("Likely does not meet"), false);
+  assert.equal(text.includes("The visitor said so."), false);
 });
 
 test("W1: printing happens only when the visitor presses the print button", async () => {

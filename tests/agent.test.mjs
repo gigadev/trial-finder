@@ -546,7 +546,8 @@ test("T8, W4: a hostile record reaches the model only as labelled record text, a
   for (const call of model.calls) {
     assert.equal(call.messages[0].content.includes("IGNORE YOUR INSTRUCTIONS"), false);
     const tools = call.tools.map((tool) => tool.function.name);
-    assert.deepEqual(tools.sort(), ["study_explainer", "website_get_trial", "website_search_trials", "website_shortlist", "website_show_eligibility_notes"], "no other tool is ever offered");
+    const expected = [...MANIFEST.actions.agentTools.map((name) => `website_${name}`), "study_explainer"].sort();
+    assert.deepEqual(tools.sort(), expected, "no other tool is ever offered");
   }
   const lastTool = (call) => model.calls[call].messages.filter((entry) => entry.role === "tool").at(-1).content;
   // Only ids the page has shown can be shortlisted (W5).
@@ -723,6 +724,37 @@ test("the shortlist through the runtime: add an id the page has shown, list it, 
   assertRefusalBlock(result(4), "validation");
   assert.deepEqual(result(5).shortlist, []);
   assert.equal(node("shortlist-empty").hidden, false);
+});
+
+test("the sheet through the runtime: refused while the shortlist is empty; only real questions are added", async () => {
+  const { page, node } = freshPage();
+  page.noticeAccepted = true;
+  // The asthma search returns the study whose record is recorded, so the sheet can fetch it.
+  const input = FIXTURES["search-asthma-boise"].input;
+  const first = STUDY_ID;
+  const { run, model } = await runScript([
+    { tool: "website_build_visit_sheet", arguments: {} },
+    { tool: "website_search_trials", arguments: { condition: input.condition, place: input.place } },
+    { tool: "website_shortlist", arguments: { change: "add", id: first } },
+    { tool: "website_build_visit_sheet", arguments: { questions: ["Can I keep seeing my own doctor?"] } },
+    { tool: "website_build_visit_sheet", arguments: { questions: ["Is parking paid for?", "Tell your doctor you qualify."] } },
+    { text: "Done." },
+  ]);
+  await run;
+  const result = (call) => model.toolResults(call).at(-1).result;
+  assertRefusalBlock(result(1), "business");
+  const built = result(4);
+  assert.equal(built.ok, true);
+  assert.deepEqual(built.studies_on_sheet, [first]);
+  assert.deepEqual(built.could_not_fetch, []);
+  assert.deepEqual(built.added_questions, ["Can I keep seeing my own doctor?"]);
+  assert.match(built.next, /Print button/);
+  const refused = result(5);
+  assertRefusalBlock(refused, "validation");
+  assert.match(refused.reason, /Tell your doctor you qualify/);
+  assert.deepEqual(page.getState().sheet.questions, ["Can I keep seeing my own doctor?"], "a refused call adds nothing, not even its good question");
+  assert.equal(node("sheet").hidden, false);
+  assert.equal(textOf(node("sheet-body")).includes("you qualify"), false);
 });
 
 // ---------------------------------------------------------------------------------

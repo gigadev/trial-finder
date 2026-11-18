@@ -74,7 +74,8 @@
       "search_trials",
       "get_trial",
       "shortlist",
-      "show_eligibility_notes"
+      "show_eligibility_notes",
+      "build_visit_sheet"
     ]
   }
 }

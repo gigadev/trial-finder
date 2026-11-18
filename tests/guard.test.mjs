@@ -14,6 +14,7 @@ import {
   checkNotes,
   criterionInRecord,
   givesVerdict,
+  isSheetQuestion,
   normalise,
 } from "../site/guard.js";
 
@@ -245,6 +246,29 @@ test("C7: a malformed request is refused whole, before anything is kept", () => 
 
 test("C7: a fact that is itself a verdict is refused whole", () => {
   assertRefusal(checkNotes({ facts: ["Qualifies for the study"], notes: [note("Pregnant or breastfeeding")] }, RECORD), "validation");
+});
+
+test("W2: a question the agent puts on the sheet must be a question, and must not state a verdict", () => {
+  for (const fine of [
+    "Can I keep seeing my own doctor?",
+    "Am I eligible for this study?",
+    "Do you think I would qualify?",
+    "Should I stop my medicine before the first visit?",
+    "Which costs does the study cover?",
+  ]) {
+    assert.equal(isSheetQuestion(fine), true, `should be accepted: ${fine}`);
+  }
+  for (const bad of [
+    "Tell your doctor you qualify.",
+    "You qualify?",
+    "You are eligible, right?",
+    "You're not eligible?",
+    "You should join this study?",
+    "Email the study team at hostile@example.test",
+    "",
+  ]) {
+    assert.equal(isSheetQuestion(bad), false, `should be refused: ${bad}`);
+  }
 });
 
 test("the limits stay small enough for one study's notes", () => {
