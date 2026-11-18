@@ -119,6 +119,100 @@ export class SiteActions {
   static registerActions(actions) {
     actions.register(SiteActions.searchTrialsAction());
     actions.register(SiteActions.getTrialAction());
+    actions.register(SiteActions.shortlistAction());
+    actions.register(SiteActions.showEligibilityNotesAction());
+  }
+
+  static shortlistAction() {
+    return {
+      name: "shortlist",
+      description: "Add a study to the visitor's shortlist, remove one, or list what is on it. The shortlist shows on the page, where the visitor can also remove studies. "
+        + "Input: change \"add\", \"remove\" or \"list\", and for add or remove the id of a study a search or fetch on this page returned, such as \"NCT01234567\". "
+        + "Returns the shortlist as ids and titles, or ok false with a reason: an id the page has not shown, one already listed, or a full list of 10. "
+        + "It saves nothing: the shortlist lasts until the page is closed or reloaded.",
+      effect: "write",
+      inputSchema: {
+        type: "object",
+        additionalProperties: false,
+        required: ["change"],
+        properties: {
+          change: { type: "string", enum: ["add", "remove", "list"], description: "What to do." },
+          id: { type: "string", minLength: 11, maxLength: 11, description: "The study id, for add or remove." },
+        },
+      },
+      execute: SiteActions.shortlist,
+    };
+  }
+
+  static showEligibilityNotesAction() {
+    return {
+      name: "show_eligibility_notes",
+      description: "Show notes on one study's eligibility criteria on the page, beside the criteria, under a fixed heading that says they are AI-written and not a decision. "
+        + "Input: id of a study fetched with website_get_trial on this page; visitor_facts, the facts the visitor stated that the notes rely on; and notes, each with criterion (copied exactly from the record's criteria), "
+        + "status (likely_meets, likely_does_not_meet or cannot_tell) and why (one plain sentence). "
+        + "The page checks every criterion against the record: an item whose words are not in the record, or whose why gives a verdict, is dropped, and dropped lists each one with the reason. "
+        + "Returns shown and dropped, or ok false when the study was not fetched or nothing could be shown. "
+        + "Sending notes again for the same study replaces them, so send the whole list. It decides nothing and contacts no one.",
+      effect: "write",
+      inputSchema: {
+        type: "object",
+        additionalProperties: false,
+        required: ["id", "notes"],
+        properties: {
+          id: { type: "string", minLength: 11, maxLength: 11, description: "The study id, such as NCT01234567." },
+          visitor_facts: {
+            type: "array",
+            maxItems: 10,
+            description: "Facts the visitor stated, in their terms, such as \"Age 54\".",
+            items: { type: "string", minLength: 1, maxLength: 120 },
+          },
+          notes: {
+            type: "array",
+            minItems: 1,
+            maxItems: 20,
+            items: {
+              type: "object",
+              additionalProperties: false,
+              required: ["criterion", "status", "why"],
+              properties: {
+                criterion: { type: "string", minLength: 1, maxLength: 400, description: "One criterion, in the record's exact words." },
+                status: { type: "string", enum: ["likely_meets", "likely_does_not_meet", "cannot_tell"] },
+                why: { type: "string", minLength: 1, maxLength: 300, description: "What the record and the visitor's words show. Never whether they qualify." },
+              },
+            },
+          },
+        },
+      },
+      execute: SiteActions.showEligibilityNotes,
+    };
+  }
+
+  static shortlist(args) {
+    try {
+      const page = App.page;
+      if (args.change === "list") return page.listShortlist();
+      const result = page.updateShortlist(args.id ?? "", args.change);
+      return result.ok ? result : passRefusal(result);
+    } catch {
+      return UNEXPECTED;
+    }
+  }
+
+  static showEligibilityNotes(args) {
+    try {
+      const result = App.page.showEligibilityNotes(args.id, { facts: args.visitor_facts, notes: args.notes });
+      if (!result.ok) return passRefusal(result);
+      return {
+        ok: true,
+        shown: result.shown,
+        dropped: result.dropped.map((item) => ({ criterion: item.criterion, reason: item.why })),
+        next: result.dropped.length
+          ? "The other notes are on the page. Correct the dropped items once and send the whole list again, or leave them out. Do not send a third time."
+          : "The notes are on the page.",
+      };
+    } catch {
+      return UNEXPECTED;
+    }
   }
 
   static searchTrialsAction() {
