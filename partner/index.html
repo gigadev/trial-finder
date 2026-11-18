@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Fernhollow Asthma Friends (a demonstration site)</title>
+  <meta name="description" content="An invented support group for people living with asthma and their carers. A demonstration of two agentic websites working together.">
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./support-data.js"></script>
+  <script type="module" src="./site.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to the page</a>
+
+  <p class="emergency">If this is an emergency, call your local emergency number.</p>
+
+  <p class="demo-banner">This is a demonstration site. Fernhollow Asthma Friends is an invented group.</p>
+
+  <header class="site-header">
+    <p class="site-name">Fernhollow Asthma Friends</p>
+    <p class="site-tagline">Plain-language support for people living with asthma, and the people who care for them.</p>
+  </header>
+
+  <main id="main">
+    <p class="not-advice">We do not give medical advice. Please follow the plan your care team gives you, and ask them about anything here.</p>
+
+    <section class="panel assistant" id="assistant" aria-labelledby="assistant-heading">
+      <h2 id="assistant-heading" tabindex="-1">Ask our assistant</h2>
+      <p>Ask in your own words about the topics on this page. To look for clinical studies, it can ask Trial Finder, another website, after you agree.</p>
+      <p class="assistant-note">The assistant runs in your browser on your own AI provider key. What you type to it goes to the AI provider you choose in the settings below. Nothing goes to this site.</p>
+      <p class="status" id="assistant-status" role="status">Loading the assistant… If this message stays, the assistant could not load. The pages below still work.</p>
+      <div id="agent-app">
+        <div data-ns-slot="header"></div>
+        <!-- Settings come before the chat: the key field is a password field. -->
+        <div data-ns-slot="settings"></div>
+        <div data-ns-slot="agents"></div>
+        <div data-ns-slot="chat"></div>
+      </div>
+    </section>
+
+    <div id="topics"></div>
+
+    <section class="panel" aria-labelledby="studies-link-heading">
+      <h2 id="studies-link-heading">Looking for a clinical study?</h2>
+      <p><a href="http://localhost:8080/" rel="noopener noreferrer">Trial Finder</a> helps you look for clinical studies in public records and prepare questions for your doctor. It is a separate website.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>This is a demonstration site. Fernhollow Asthma Friends is an invented group; any likeness to a real organisation is unintended.</p>
+    <p>This site has no accounts and no server. It stores nothing about you.</p>
+    <p>When you ask our assistant about studies, it may ask Trial Finder, after you agree on a card. Your browser then downloads Trial Finder's public assistant files, and that assistant reads your question in your browser, on your AI provider. Nothing you type is sent to Trial Finder's site.</p>
+  </footer>
+</body>
+</html>

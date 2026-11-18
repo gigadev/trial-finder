@@ -30,7 +30,7 @@ export const MAX_QUESTION_LENGTH = 300;
 export const WORDING = Object.freeze({
   notAdvice: "This is information, not medical advice. It cannot tell you whether you can join a study. Ask your doctor or the study team.",
   emergency: "If this is an emergency, call your local emergency number.",
-  notice: "Your search words (the condition, place, age and sex you enter) are sent to ClinicalTrials.gov, a public database run by the U.S. National Library of Medicine, to find studies. If you use the assistant, what you type to it and the study records it reads also go to the AI provider you chose in its settings. Nothing is sent to this site, and this site stores nothing about you.",
+  notice: "Your search words (the condition, place, age and sex you enter) are sent to ClinicalTrials.gov, a public database run by the U.S. National Library of Medicine, to find studies. If you use the assistant, what you type to it and the study records it reads also go to the AI provider you chose in its settings. If the assistant asks a partner site, it asks you first. Nothing is sent to this site, and this site stores nothing about you.",
   notAffiliated: "Trial Finder is not affiliated with or endorsed by the U.S. National Institutes of Health, the National Library of Medicine or ClinicalTrials.gov. A study being listed there does not mean the U.S. government has reviewed or approved it.",
   source: "Source: ClinicalTrials.gov",
   criteriaHeading: "Who can take part, in the study's own words",

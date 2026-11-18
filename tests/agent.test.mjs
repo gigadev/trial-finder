@@ -209,7 +209,11 @@ test("the model is never told about the first-search notice, so it cannot invent
   // model answered "you have not agreed yet" without calling the tool. The page's code
   // handles the notice; the model hears of it only in a refusal's reason, when it waits.
   const actions = await registry();
-  const seen = [network().getAgentSpec("trial_guide").instructions,
+  // The skill's partner rules speak of the visitor agreeing on a card before a partner
+  // site is asked (task 7). That is the runtime's consent card, not the page's notice, so
+  // exactly that text is set aside; everything else is checked.
+  const partnerRules = CONFIG.commondefs.replacement_strings.partner_rules.trim();
+  const seen = [network().getAgentSpec("trial_guide").instructions.replace(partnerRules, ""),
     ...actions.catalog({ base: BASE, network: NETWORK_NAME }).map((entry) => JSON.stringify([entry.description, entry.inputSchema]))];
   for (const text of seen) {
     assert.equal(/notice|agree|consent|permission/i.test(text), false, `the model must not read about the notice: ${text.slice(0, 120)}`);
@@ -256,7 +260,9 @@ test("W3, T2: every action declares a read or write effect, none is irreversible
       assert.equal(NEVER.test(typeof tool === "string" ? tool : JSON.stringify(tool)), false, `${agent.name} may call ${JSON.stringify(tool)}`);
     }
   }
-  assert.deepEqual(MANIFEST.allowed_peers, [], "no other site may be contacted yet (task 7 adds the partner)");
+  // The one partner site, and only an origin some agent really calls (task 7).
+  assert.deepEqual(MANIFEST.allowed_peers, ["http://127.0.0.1:8091"]);
+  assert.equal(MANIFEST.peer_policy.mode, "closed");
 });
 
 test("C2: no agent is offered more than 5 site tools, or more than 7 tools in all", async () => {
@@ -546,7 +552,7 @@ test("T8, W4: a hostile record reaches the model only as labelled record text, a
   for (const call of model.calls) {
     assert.equal(call.messages[0].content.includes("IGNORE YOUR INSTRUCTIONS"), false);
     const tools = call.tools.map((tool) => tool.function.name);
-    const expected = [...MANIFEST.actions.agentTools.map((name) => `website_${name}`), "study_explainer"].sort();
+    const expected = [...MANIFEST.actions.agentTools.map((name) => `website_${name}`), "study_explainer", "support_desk"].sort();
     assert.deepEqual(tools.sort(), expected, "no other tool is ever offered");
   }
   const lastTool = (call) => model.calls[call].messages.filter((entry) => entry.role === "tool").at(-1).content;
@@ -755,6 +761,159 @@ test("the sheet through the runtime: refused while the shortlist is empty; only 
   assert.deepEqual(page.getState().sheet.questions, ["Can I keep seeing my own doctor?"], "a refused call adds nothing, not even its good question");
   assert.equal(node("sheet").hidden, false);
   assert.equal(textOf(node("sheet-body")).includes("you qualify"), false);
+});
+
+// ---------------------------------------------------------------------------------
+// The partner site, both ways (task 7)
+// ---------------------------------------------------------------------------------
+
+const PARTNER_URL = "http://127.0.0.1:8091/support_desk";
+const PARTNER_REQUEST = "Asthma: where can I find support while I think about a study?";
+
+test("the partner is declared once, labelled for the consent card, and is the only allowed peer", () => {
+  const front = CONFIG.tools.find((agent) => agent.name === "trial_guide");
+  const remotes = front.tools.filter((tool) => /^https?:/.test(tool));
+  assert.deepEqual(remotes, [PARTNER_URL]);
+  assert.deepEqual(CONFIG.link_labels, { [PARTNER_URL]: "Fernhollow Asthma Friends" });
+  assert.deepEqual(MANIFEST.allowed_peers, [new URL(PARTNER_URL).origin]);
+  for (const agent of CONFIG.tools.filter((candidate) => candidate.name !== "trial_guide")) {
+    assert.equal((agent.tools ?? []).some((tool) => /^https?:/.test(tool)), false, `${agent.name} must not call other sites`);
+  }
+});
+
+test("the partner rules are the skill's, word for word, except where the partner's link comes from", async () => {
+  const template = await readFile(path.join(HERE, "../vendor/agentify-website/templates/network.hocon"), "utf8");
+  const templateRules = /"partner_rules": """\n([\s\S]*?)\n"""/.exec(template)[1];
+  const ours = CONFIG.commondefs.replacement_strings.partner_rules.trim();
+  assert.equal(ours, templateRules.replace("from website_<read_action>.", "from its reply."),
+    "only the link clause may differ (OPEN_QUESTIONS.md B18)");
+  assert.ok(network().getAgentSpec("trial_guide").instructions.includes(ours));
+  assert.ok(ours.includes("never include names, emails, phone numbers or booking codes"));
+});
+
+test("D8: the front agent is told to send the partner only the condition and the question", () => {
+  const instructions = network().getAgentSpec("trial_guide").instructions;
+  assert.ok(instructions.includes("call support_desk (Fernhollow Asthma Friends) with the condition and question only; never age, sex or place unless asked."));
+  assert.ok(instructions.includes("so keep it shorter"), "requests stay under the card's 140 characters");
+});
+
+/** A front-agent run whose consent card answers as told, and whose partner is a stand-in. */
+async function partnerRun(decision) {
+  freshPage();
+  const net = network();
+  const actions = await registry();
+  const model = new ScriptedModel([
+    { tool: "support_desk", arguments: { request: PARTNER_REQUEST } },
+    { text: "Done." },
+  ]);
+  const ctx = context(net, actions, model);
+  ctx.history = [{ role: "user", content: "SECRET-EARLIER-TURN I am 54 and live in Boise" }];
+  ctx.slyData = { private_note: "SECRET-SLY" };
+  const cards = [];
+  const resolved = [];
+  const invoked = [];
+  const fetched = [];
+  const savedFetch = globalThis.fetch;
+  globalThis.fetch = async (...args) => { fetched.push(args[0]); throw new Error("no network in tests"); };
+  ctx.requestConsent = async (info) => { cards.push(info); return decision; };
+  ctx.resolveRemote = async (url) => {
+    resolved.push(url);
+    return { invoke: async (request) => { invoked.push(request); return { text: "Fernhollow offers support pages at http://127.0.0.1:8091/." }; } };
+  };
+  try {
+    await runAgent(ctx, ctx.frontMan, "Where can I find support?", null, []);
+  } finally {
+    globalThis.fetch = savedFetch;
+  }
+  return { model, cards, resolved, invoked, fetched };
+}
+
+test("W1: when the visitor declines the card, nothing is fetched from the partner and the agent is told", async () => {
+  const { model, cards, resolved, invoked, fetched } = await partnerRun("decline");
+  assert.equal(cards.length, 1);
+  assert.deepEqual({ kind: cards[0].kind, label: cards[0].peerLabel, origin: cards[0].peerOrigin, text: cards[0].requestText },
+    { kind: "network", label: "Fernhollow Asthma Friends", origin: "127.0.0.1:8091", text: PARTNER_REQUEST });
+  assert.deepEqual(resolved, [], "the partner's files are not even fetched");
+  assert.deepEqual(invoked, []);
+  assert.deepEqual(fetched, []);
+  const toolMessage = model.calls[1].messages.filter((message) => message.role === "tool").at(-1).content;
+  assert.match(toolMessage, /^The user declined to contact 127.0.0.1:8091\./);
+});
+
+test("D8: when the visitor allows it, the partner gets the request text and nothing else", async () => {
+  const { cards, resolved, invoked } = await partnerRun("allow");
+  assert.equal(cards.length, 1);
+  assert.deepEqual(resolved, [PARTNER_URL]);
+  assert.equal(invoked.length, 1);
+  assert.equal(invoked[0].user_message.text, PARTNER_REQUEST);
+  assert.equal(JSON.stringify(invoked[0]).includes("SECRET-EARLIER-TURN"), false, "no chat history goes to the partner");
+  assert.equal(JSON.stringify(invoked[0]).includes("SECRET-SLY"), false, "no private data goes to the partner");
+  assert.deepEqual(invoked[0].sly_data, {});
+});
+
+test("run by another site, Trial Finder's network gets none of this page's tools", async () => {
+  const net = network();
+  const ctx = { ...context(net, await registry(), null), isTop: false };
+  for (const agent of CONFIG.tools) {
+    const table = await buildToolTable(ctx, net.getAgentSpec(agent.name), [], null);
+    assert.equal([...table.toolByName.keys()].some((name) => name.startsWith("website_")), false, `${agent.name} is offered site tools`);
+  }
+  // Its first sentence is about all a caller learns, so it names what the site offers.
+  assert.match(net.getAgentSpec("trial_guide").instructions.trim(), /^You are the assistant on the Trial Finder website\. You help patients and caregivers find clinical studies/);
+});
+
+// ---------------------------------------------------------------------------------
+// The consent card's focus (from the skill's template tests)
+// ---------------------------------------------------------------------------------
+
+test("the consent card gets focus while it waits, and focus then returns to the chat", async () => {
+  const { StubElement } = await import("../vendor/agentify-website/templates/tests/stub_element.mjs");
+  const card = (text) => {
+    const box = new StubElement("div");
+    const title = new StubElement("div");
+    title.textContent = text;
+    box.provide(".ns-consent-title", [title]);
+    return { box, title };
+  };
+  const older = card("Contact Older Site on your behalf?");
+  const newest = card("Contact Fernhollow Asthma Friends on your behalf?");
+  const messageBox = new StubElement("textarea");
+  document.provide("#assistant-message", [messageBox]);
+  document.activeElement = null;
+  let answerCard;
+  AssistantMount.defaultConsent = () => {
+    document.provide("#ns-msgs .ns-consent", [older.box, newest.box]);
+    return new Promise((resolve) => { answerCard = resolve; });
+  };
+  const answer = AssistantMount.consent({ kind: "network", peerLabel: "Fernhollow Asthma Friends", peerOrigin: "127.0.0.1:8091", requestText: PARTNER_REQUEST });
+  assert.equal(newest.box.getAttribute("role"), "group");
+  assert.equal(newest.box.getAttribute("aria-label"), newest.title.textContent);
+  assert.equal(newest.title.tabIndex, -1);
+  assert.equal(newest.title.focused, true, "the newest card's title takes focus");
+  assert.notEqual(older.title.focused, true);
+  assert.notEqual(messageBox.focused, true, "focus stays on the card until it is answered");
+  answerCard("decline");
+  assert.equal(await answer, "decline", "the visitor's answer is passed on unchanged");
+  assert.equal(messageBox.focused, true, "focus goes back to the message box");
+});
+
+test("a visitor typing in the page's own form keeps focus when a consent card appears", async () => {
+  const { StubElement } = await import("../vendor/agentify-website/templates/tests/stub_element.mjs");
+  const box = new StubElement("div");
+  const title = new StubElement("div");
+  title.textContent = "Contact Fernhollow Asthma Friends on your behalf?";
+  box.provide(".ns-consent-title", [title]);
+  const pageField = new StubElement("input");
+  pageField.closest = () => null;
+  document.activeElement = pageField;
+  AssistantMount.defaultConsent = () => {
+    document.provide("#ns-msgs .ns-consent", [box]);
+    return Promise.resolve("allow");
+  };
+  assert.equal(await AssistantMount.consent({ kind: "network" }), "allow");
+  assert.equal(box.getAttribute("aria-label"), title.textContent, "the card is still named");
+  assert.notEqual(title.focused, true, "focus stays in the visitor's form");
+  document.activeElement = null;
 });
 
 // ---------------------------------------------------------------------------------

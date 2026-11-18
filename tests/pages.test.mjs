@@ -75,10 +75,13 @@ test("D6: the AI page names every place anything is sent, and says nothing goes 
     "What you type to the assistant, the chat so far, and the study records it reads",
     "The AI provider you chose in the assistant's settings",
     "Their prices and their privacy terms apply.",
-    // Nothing to us. When task 7 adds the partner site, this row must change, and this
-    // test with it.
+    // Nothing to us, and to no other site but the partner, after consent (task 7).
     "Never. The site is plain files; it has no server that receives anything.",
-    "Never. The assistant does not contact other sites.",
+    "Never. The assistant asks no site but Fernhollow Asthma Friends, and only after you agree.",
+    "only after you agree on a card that names it",
+    "never your age, sex or place unless you asked for exactly that",
+    "Nothing you type is sent to that site's server.",
+    "it cannot search for them",
     "They are not sent to the AI provider",
   ]) {
     assert.ok(text.includes(line), `ai.html must say: ${line}`);

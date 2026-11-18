@@ -1,0 +1,10 @@
+{
+  "networks": [
+    {
+      "name": "support_desk"
+    }
+  ],
+  "actions": {
+    "version": 1
+  }
+}

@@ -23,5 +23,25 @@ jobs:
       # files (network JSON, bridge, discovery files) match the .hocon source.
       - name: Conformance check
         run: node vendor/agentify-website/scripts/build_network.mjs site/trial_finder.hocon --manifest site/agent-manifest.json --check
-      # Task 7 adds check_partner.mjs in both directions.
+      - name: Conformance check (partner site)
+        run: node vendor/agentify-website/scripts/build_network.mjs partner/support_desk.hocon --manifest partner/agent-manifest.json --check
+      # Both sites on the two host names their networks name, then the challenge's partner
+      # checker both ways, and once each as any caller. The addresses are the local ones
+      # until task 8 hosts the sites.
+      - name: Serve both sites
+        run: |
+          node vendor/agentify-website/scripts/serve_site.mjs site --port 8080 --open-as localhost &
+          node vendor/agentify-website/scripts/serve_site.mjs partner --port 8091 --open-as 127.0.0.1 &
+          for port in 8080 8091; do
+            for attempt in $(seq 1 30); do
+              curl -s -o /dev/null "http://127.0.0.1:$port/agent-manifest.json" && break
+              sleep 0.5
+            done
+          done
+      - name: Partner checks, both ways
+        run: |
+          node vendor/agentify-website/scripts/check_partner.mjs http://127.0.0.1:8091/support_desk --origin http://localhost:8080
+          node vendor/agentify-website/scripts/check_partner.mjs http://localhost:8080/trial_finder --origin http://127.0.0.1:8091
+          node vendor/agentify-website/scripts/check_partner.mjs http://127.0.0.1:8091/support_desk
+          node vendor/agentify-website/scripts/check_partner.mjs http://localhost:8080/trial_finder
       # The eval is run by hand with a real key and never runs here.

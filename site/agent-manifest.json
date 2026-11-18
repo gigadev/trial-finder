@@ -24,11 +24,13 @@
     "mock": false,
     "byok_router": "https://api.otari.ai/api/v1"
   },
-  "allowed_peers": [],
+  "allowed_peers": [
+    "http://127.0.0.1:8091"
+  ],
   "peer_policy": {
     "mode": "closed",
     "deny_origins": [],
-    "note": "Local agents and page-local actions only. No other site is contacted."
+    "note": "Calls only the partner sites in allowed_peers, each after the visitor agrees on a card."
   },
   "agent_mcp": {
     "protocol": "nsdeploy-agent-mcp/v1",

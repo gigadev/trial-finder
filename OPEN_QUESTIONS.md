@@ -541,6 +541,55 @@ Settled while building:
 - **Wording review is Scott's** (HANDOFF §13: 0.5 h). The plain pages are new copy that
   only a person should approve.
 
+### B18. Task 7: what was settled
+
+Approved by Scott on Nov 18, 2026 ("Yes, your picks"):
+
+- **The partner is Fernhollow Asthma Friends,** an invented support group for asthma.
+  Web searches found no organisation, product or trademark with that name; a check of
+  the U.S. trademark office's own search is still Scott's to do before the video.
+- **When Fernhollow calls Trial Finder, our network gives a plain link,** with no
+  condition in the address. Answers decision 2 in section C. It cannot search for the
+  caller: the runtime gives a called network none of its site's tools (A4).
+- **The front agent is at its limit:** five site tools, the explainer and Fernhollow
+  make seven (C2). A new feature must now fold into an existing tool.
+- **The first-search notice says "If the assistant asks a partner site, it asks you
+  first."** and `ai.html` describes the partner call and being called (D6).
+
+Settled while building:
+
+- **Our partner rules differ from the skill's template in one clause:** the partner's
+  link comes "from its reply", not from a read action, because all five Trial Finder
+  actions are writes. The build warns about it; a test keeps the rest word for word.
+  Fernhollow's instructions name its own address so its replies can carry it.
+  Fernhollow's partner rules match the template exactly: its one action is a read.
+- **T8 is not met for partner replies.** The standard asks that every partner reply be
+  labelled untrusted in the result. The runtime hands a partner's reply straight to the
+  model; no code of ours sits in that path, and the runtime is not ours to edit. The
+  skill's partner rules tell the model the reply is data, not instructions. **Scott:**
+  accept this as an instruction-only rule, or ask the challenge's maintainers for a hook.
+- **D8 is partly code.** Code sends a partner only the request text (no chat history, no
+  private data; tested). What the model writes in that text is in the instructions
+  only: the condition and the question, never age, sex or place unless asked. The eval
+  checks it.
+- **Local addresses:** Trial Finder at `http://localhost:8080`, Fernhollow at
+  `http://127.0.0.1:8091`. Two host names keep the runtime's local key cookie from
+  reaching the other site (`linking.md`). Port 8081 was taken by Docker on Scott's
+  machine, so Fernhollow uses 8091. Task 8 replaces both with the hosted addresses, in
+  both networks' `tools`, `link_labels`, `allowed_peers`, Fernhollow's instructions and
+  page link, the source-check allow-list and the tests.
+- **Fernhollow has one agent and one read action** over its own pages, with no medical
+  content beyond general support, and says on every view that it is an invented
+  demonstration. It carries the same emergency line.
+- **Fernhollow's runtime is a third unchanged copy,** held to the same recorded hashes.
+- **The source checks now cover both sites,** each with its own allow-list of outside
+  origins.
+- **Seen, not fixed (task 10):** after a consent card is answered, focus stays on the
+  card's title instead of returning to the message box. The skill's template behaves
+  the same way in a real browser, where the answered card stays on the page.
+- **CI** now builds both networks and runs `check_partner.mjs` both ways against both
+  sites served in the background. Not run yet: it runs when Scott pushes.
+
 ---
 
 ## C. Decisions waiting on Scott
@@ -548,6 +597,6 @@ Settled while building:
 | # | Question | Where | My pick | Needed by |
 | --- | --- | --- | --- | --- |
 | 1 | ~~Agents and tool count~~ **Answered Nov 18: two agents, five actions, chat forms off (B15)** | A3 | Two agents, five actions, chat forms off | Task 4 plan |
-| 2 | What the partner's call to us shows, now that a called network has no tools | A4 | Ours answers what it does and gives a link with the condition after `#` | Task 7 plan |
+| 2 | ~~What the partner's call to us shows~~ **Answered Nov 18: a plain link, no condition in the address (B18)** | A4 | A plain link | Task 7 plan |
 | 3 | Page CSP against "any provider URL" | B5 | Listed providers plus the visitor's own machine | Task 8 |
 | 4 | `vendor/agentify-website/` as a development tool | B9 | Yes | Task 1 commit |

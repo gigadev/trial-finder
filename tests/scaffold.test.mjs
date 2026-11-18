@@ -76,6 +76,16 @@ test("site/runtime is the skill's runtime exactly as copied", async () => {
   assert.deepEqual(result, NOTHING);
 });
 
+test("partner/runtime is the skill's runtime exactly as copied", async () => {
+  const runtimeFiles = Object.fromEntries(
+    Object.entries(RECORD.files)
+      .filter(([name]) => name.startsWith("runtime/"))
+      .map(([name, hash]) => [name.slice("runtime/".length), hash]),
+  );
+  const result = await compare(path.join(ROOT, "partner/runtime"), runtimeFiles);
+  assert.deepEqual(result, NOTHING);
+});
+
 test("NOTICE records where the runtime came from, and the license is Apache-2.0", async () => {
   const notice = await readFile(path.join(ROOT, "NOTICE"), "utf8");
   assert.ok(notice.includes(RECORD.commit), "NOTICE must name the copied commit");

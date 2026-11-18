@@ -17,24 +17,32 @@ import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 
-const SITE = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../site");
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
-/** Folders in site/ that hold other projects' files or generated files. */
+/** Folders in a site that hold other projects' files or generated files. */
 const NOT_OURS = new Set(["runtime", "bridge", ".well-known"]);
 
-/** The only outside origins our pages may link to. Nothing may be loaded from any. */
-const LINK_ORIGINS = new Set(["https://clinicaltrials.gov"]);
-
-/** The only outside origin our scripts may name: the data source. */
-const SCRIPT_ORIGINS = new Set(["https://clinicaltrials.gov"]);
+/**
+ * Both sites, each with its own allow-lists. links: the only outside origins its pages
+ * may link to; nothing may be loaded from any. scripts: the only outside origins its
+ * scripts may name. Fernhollow's only outside origin is Trial Finder, at its local
+ * address until task 8 hosts it.
+ */
+const SITES = [
+  { dir: "site", links: new Set(["https://clinicaltrials.gov"]), scripts: new Set(["https://clinicaltrials.gov"]) },
+  { dir: "partner", links: new Set(["http://localhost:8080"]), scripts: new Set(["http://localhost:8080"]) },
+];
 
 async function ourFiles(extension) {
   const found = [];
-  for (const entry of await readdir(SITE, { withFileTypes: true, recursive: true })) {
-    if (!entry.isFile() || !entry.name.endsWith(extension)) continue;
-    const relative = path.relative(SITE, path.join(entry.parentPath, entry.name)).split(path.sep);
-    if (NOT_OURS.has(relative[0])) continue;
-    found.push({ name: relative.join("/"), text: await readFile(path.join(entry.parentPath, entry.name), "utf8") });
+  for (const site of SITES) {
+    const root = path.join(ROOT, site.dir);
+    for (const entry of await readdir(root, { withFileTypes: true, recursive: true })) {
+      if (!entry.isFile() || !entry.name.endsWith(extension)) continue;
+      const relative = path.relative(root, path.join(entry.parentPath, entry.name)).split(path.sep);
+      if (NOT_OURS.has(relative[0])) continue;
+      found.push({ name: [site.dir, ...relative].join("/"), site, text: await readFile(path.join(entry.parentPath, entry.name), "utf8") });
+    }
   }
   return found;
 }
@@ -49,11 +57,13 @@ const PAGES = await ourFiles(".html");
 const STYLES = await ourFiles(".css");
 
 test("there are site files to check", () => {
-  assert.ok(SCRIPTS.some((file) => file.name === "app.js"));
-  assert.ok(SCRIPTS.some((file) => file.name === "trials-api.js"));
-  assert.ok(PAGES.some((file) => file.name === "index.html"));
+  assert.ok(SCRIPTS.some((file) => file.name === "site/app.js"));
+  assert.ok(SCRIPTS.some((file) => file.name === "partner/support-data.js"));
+  assert.ok(PAGES.some((file) => file.name === "partner/index.html"));
+  assert.ok(SCRIPTS.some((file) => file.name === "site/trials-api.js"));
+  assert.ok(PAGES.some((file) => file.name === "site/index.html"));
   assert.ok(STYLES.length > 0);
-  assert.equal(SCRIPTS.some((file) => file.name.startsWith("runtime/")), false);
+  assert.equal(SCRIPTS.some((file) => file.name.includes("/runtime/")), false);
 });
 
 test("D1: our scripts use no browser storage", () => {
@@ -95,7 +105,7 @@ test("D4: our scripts name no outside origin except the data source", () => {
   for (const file of SCRIPTS) {
     for (const match of codeOnly(file.text).matchAll(/\b(?:https?:)?\/\/[a-z0-9.-]+\.[a-z]{2,}/gi)) {
       const origin = new URL(match[0].startsWith("//") ? `https:${match[0]}` : match[0]).origin;
-      assert.ok(SCRIPT_ORIGINS.has(origin), `${file.name} names ${origin}`);
+      assert.ok(file.site.scripts.has(origin), `${file.name} names ${origin}`);
     }
     assert.equal(/sendBeacon|new Image\(|WebSocket|EventSource|XMLHttpRequest|importScripts/.test(codeOnly(file.text)), false,
       `${file.name} must not open another kind of connection`);
@@ -115,7 +125,7 @@ test("D4: pages load nothing from another origin, and have no inline script or h
     for (const match of html.matchAll(/<a\b[^>]*?\shref\s*=\s*["']([^"']+)["'][^>]*>/gi)) {
       const address = match[1];
       if (/^(\.\/|#)/.test(address)) continue;
-      assert.ok(LINK_ORIGINS.has(new URL(address).origin), `${file.name} links to ${address}`);
+      assert.ok(file.site.links.has(new URL(address).origin), `${file.name} links to ${address}`);
       assert.match(match[0], /rel="noopener noreferrer"/, `${file.name}: an outside link must not pass on where the visitor came from`);
     }
     assert.equal(/\son[a-z]+\s*=/i.test(html), false, `${file.name} must have no inline event handlers`);
