@@ -114,6 +114,7 @@ test("the AI page says what the code checks, and plainly what it cannot", () => 
   for (const line of [
     "Notes on a study's rules are refused until the page has fetched that study's record.",
     "Each note must quote the study's own words, found in its record.",
+    "The note then shows that whole rule as the record words it, not the AI's copy of it.",
     "The assistant's own words in the chat are written by the AI.",
     "The assistant changes the page without asking first",
     "printing is your own button",

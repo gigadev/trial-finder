@@ -10,6 +10,8 @@
 //   C8  A quoted criterion must be in the study's fetched criteria text, compared after
 //       normalising case, spacing, bullets, numbering, escapes, quotes and dashes.
 //   C9  Every dropped item is named with its reason, so the model can correct it once.
+//   C10 A kept note shows the record's whole criterion in the record's own words, never
+//       the model's quote, so nothing cut mid-sentence or paraphrased reaches the page.
 // Instructions ask the model for the same things; this is the enforcement (W4).
 
 export const STATUSES = Object.freeze(["likely_meets", "likely_does_not_meet", "cannot_tell"]);
@@ -78,7 +80,72 @@ function quoteKey(criterion) {
 export function criterionInRecord(criterion, recordCriteria) {
   const key = quoteKey(criterion);
   if (key.length < LIMITS.minCriterion) return false;
-  return normalise(recordCriteria).includes(key);
+  return wholeCriterion(key, recordCriteria) !== null;
+}
+
+/** Above this length, a whole criterion is cut to the whole sentences the quote is in. */
+const MAX_SHOWN = 600;
+const BULLET = /^\s*(?:(?:[*\-•·▪◦]+)|(?:\(?[0-9a-z]{1,3}[.)]))\s+/i;
+
+const indent = (line) => line.match(/^\s*/)[0].length;
+const unescape = (text) => text.replace(/\\([^\w\s])/g, "$1");
+
+/**
+ * The first and last of `parts` that the normalised key falls in, or null. The parts are
+ * joined with one space, as normalise() joins a record's lines.
+ */
+function partsCovering(parts, key) {
+  let joined = "";
+  const spans = [];
+  parts.forEach((part, index) => {
+    const text = normalise(part);
+    if (!text) return;
+    if (joined) joined += " ";
+    spans.push({ index, start: joined.length, end: joined.length + text.length });
+    joined += text;
+  });
+  const at = joined.indexOf(key);
+  if (at < 0) return null;
+  const first = spans.find((span) => span.end > at);
+  const last = [...spans].reverse().find((span) => span.start < at + key.length);
+  return [first.index, last.index];
+}
+
+/**
+ * The record's whole criterion (or criteria) that a normalised quote is in, in the
+ * record's own words: the first line's bullet or number and markdown escapes removed,
+ * spacing tidied. A criterion ending in a colon brings the indented points under it.
+ * One longer than MAX_SHOWN is cut to the whole sentences the quote is in. Null when
+ * the quote is not in the record (C8). This keeps a note from showing words cut
+ * mid-sentence (C10).
+ */
+function wholeCriterion(key, recordCriteria) {
+  const lines = String(recordCriteria ?? "").split(/\r?\n/);
+  const range = partsCovering(lines, key);
+  if (!range) return null;
+  let [first, last] = range;
+  if (tidy(lines[last]).endsWith(":")) {
+    for (let next = last + 1; next < lines.length; next += 1) {
+      if (!tidy(lines[next])) continue;
+      if (indent(lines[next]) <= indent(lines[first])) break;
+      last = next;
+    }
+  }
+  // A line at the first line's depth is another criterion: its bullet goes and "; " parts
+  // it from the one before. A deeper line is a point under it and keeps its number.
+  const base = indent(lines[first]);
+  const text = tidy(unescape(lines.slice(first, last + 1)
+    .filter((line) => tidy(line))
+    .map((line, index) => {
+      if (index === 0) return line.replace(BULLET, "");
+      return indent(line) <= base ? `; ${line.replace(BULLET, "")}` : ` ${line}`;
+    })
+    .join("")
+    .replace(/\s+;/g, ";")));
+  if (text.length <= MAX_SHOWN) return text;
+  const sentences = text.split(/(?<=[.;!?])\s+/);
+  const within = partsCovering(sentences, key);
+  return within ? sentences.slice(within[0], within[1] + 1).join(" ") : text;
 }
 
 const VERDICTS = [
@@ -152,18 +219,20 @@ export function checkNotes(input, recordCriteria) {
   const dropped = [];
   const seen = new Set();
   for (const item of notes) {
-    const criterion = tidy(item.criterion);
-    const key = quoteKey(criterion);
+    const quoted = tidy(item.criterion);
+    const key = quoteKey(quoted);
+    const whole = key.length < LIMITS.minCriterion ? null : wholeCriterion(key, recordCriteria);
+    const wholeKey = whole === null ? null : normalise(whole);
     let reason = null;
     if (key.length < LIMITS.minCriterion) reason = "too_short";
-    else if (!normalise(recordCriteria).includes(key)) reason = "not_in_record";
+    else if (whole === null) reason = "not_in_record";
     else if (givesVerdict(item.why)) reason = "verdict";
-    else if (seen.has(key)) reason = "duplicate";
+    else if (seen.has(wholeKey)) reason = "duplicate";
     if (reason) {
-      dropped.push({ criterion, reason, why: DROP_REASONS[reason] });
+      dropped.push({ criterion: quoted, reason, why: DROP_REASONS[reason] });
     } else {
-      seen.add(key);
-      kept.push({ criterion, status: item.status, why: tidy(item.why) });
+      seen.add(wholeKey);
+      kept.push({ criterion: whole, status: item.status, why: tidy(item.why) });
     }
   }
   if (kept.length === 0) {

@@ -665,7 +665,8 @@ test("W2, C10: notes show under a fixed heading and disclaimer, in three fixed s
     facts: ["Age 54", "Has had asthma for 3 years"],
     notes: [
       { criterion: REAL_LINE, status: "likely_meets", why: "The visitor said they are 54." },
-      { criterion: REAL_LINE.slice(0, 40), status: "cannot_tell", why: "Not said." },
+      // A piece of a criterion is shown as the whole criterion (C10).
+      { criterion: "Current smokers, former smokers with", status: "cannot_tell", why: "Not said." },
     ],
   });
   assert.equal(result.ok, true);
@@ -677,7 +678,7 @@ test("W2, C10: notes show under a fixed heading and disclaimer, in three fixed s
   const rows = block.querySelectorAll("tbody")[0].children;
   assert.deepEqual(rows.map((row) => row.children.map((cell) => cell.textContent)), [
     [REAL_LINE, "Likely meets", "The visitor said they are 54."],
-    [REAL_LINE.slice(0, 40), "Cannot tell: ask the study team", "Not said."],
+    ["Current smokers, former smokers with >10 pack-years history.", "Cannot tell: ask the study team", "Not said."],
   ]);
   assert.deepEqual(block.querySelectorAll("li").map((li) => li.textContent), ["Age 54", "Has had asthma for 3 years"]);
   const raw = JSON.parse(FIXTURES["study-found"].body).protocolSection;
