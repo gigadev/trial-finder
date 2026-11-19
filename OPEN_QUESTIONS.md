@@ -616,6 +616,41 @@ Settled while building:
 - **CI** now builds both networks and runs `check_partner.mjs` both ways against both
   sites served in the background. Not run yet: it runs when Scott pushes.
 
+### B19. Task 8: hosting, what was settled and what the live sites showed
+
+- **Both sites are live on Cloudflare Pages,** each a project built from `main`:
+  `trial-finder` (root `site`) at https://trial-finder.pages.dev and
+  `fernhollow-asthma-friends` (root `partner`) at
+  https://fernhollow-asthma-friends.pages.dev. No build command; build output `.`.
+  Created by Scott on his personal Cloudflare account, Nov 18, 2026. Cloudflare's
+  "Create" button now starts a Worker by default; the Pages option is separate.
+- **Decision 3, the page's security policy:** Scott did not choose, so option (a) went
+  in: the AI providers the runtime's settings panel offers, OpenRouter (listed in the
+  challenge's provider notes), and the visitor's own computer (`localhost`,
+  `127.0.0.1`). Any other provider address is blocked by the browser, and `ai.html`
+  says so. A test reads the runtime's provider list and fails if it changes. **Scott:**
+  confirm, or choose (b), any `https:` address.
+- **What Cloudflare sends by itself** (not in its docs; seen on the live sites):
+  `Access-Control-Allow-Origin: *` on every file, `Referrer-Policy:
+  strict-origin-when-cross-origin`, `X-Content-Type-Options: nosniff`, and a permanent
+  redirect from any `.html` address to the address without it. Our `_headers` removes
+  the default CORS header from everything but the public agent files (it works: checked
+  on a preview first), and sets `no-referrer`.
+- **Cloudflare joins repeated headers with commas.** The worker's and the bridge page's
+  own policies therefore remove the site-wide one first ("! Content-Security-Policy").
+  A test works out each address's final headers by Cloudflare's documented rules.
+- **The bridge page's `.html` redirect is harmless:** the challenge's checker warns and
+  says the runtime follows it. Our header rules use `/bridge/*`, which covers both.
+- **Checked on the live sites:** headers on both; `check_partner.mjs` all four ways
+  with the live addresses; HTTPS redirects; and Scott's live try of both sites calling
+  each other with his key, all passed. On the preview, under the strict policy: the
+  assistant loaded, a search and a study's details worked, the partner's files and
+  bridge page loaded, a provider was reachable, and an outside address was blocked.
+- **Local copies now call each other at the live addresses.** CI still serves both
+  sites locally and runs the checker against the files themselves; the live sites are
+  checked by hand.
+- **Not done:** a custom domain (none needed), and a real phone (task 10).
+
 ---
 
 ## C. Decisions waiting on Scott
@@ -624,5 +659,5 @@ Settled while building:
 | --- | --- | --- | --- | --- |
 | 1 | ~~Agents and tool count~~ **Answered Nov 18: two agents, five actions, chat forms off (B15)** | A3 | Two agents, five actions, chat forms off | Task 4 plan |
 | 2 | ~~What the partner's call to us shows~~ **Answered Nov 18: a plain link, no condition in the address (B18)** | A4 | A plain link | Task 7 plan |
-| 3 | Page CSP against "any provider URL" | B5 | Listed providers plus the visitor's own machine | Task 8 |
+| 3 | ~~Page CSP against "any provider URL"~~ **Default taken Nov 18 (B19); Scott to confirm** | B5 | Listed providers plus the visitor's own machine | Task 8 |
 | 4 | `vendor/agentify-website/` as a development tool | B9 | Yes | Task 1 commit |
