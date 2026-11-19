@@ -7,8 +7,9 @@ reuse the pattern on your own site. Short on purpose. The full rule list is
 Trial Finder is a static site for the Open Agentic Web Challenge. An AI agent, running
 in the visitor's browser on the visitor's own model key, searches public clinical study
 records, explains who each study is for in plain words, and prepares a sheet of
-questions for the visitor's doctor. It never says whether someone can take part, and it
-never contacts anyone. Its partner, Fernhollow Asthma Friends, is an invented support
+questions for the visitor's doctor. It never contacts anyone, and it is built not to decide
+whether someone can take part: the notes on the page are checked for that in code, and the
+chat is asked not to by its instructions. Its partner, Fernhollow Asthma Friends, is an invented support
 group whose own agent can ask Trial Finder's, and be asked by it.
 
 ## The pattern: instructions ask, code decides
@@ -91,6 +92,16 @@ Said plainly, so nobody reuses this and assumes more than it does:
   the eval found a model marking "diagnosed for at least 12 months" as met when the
   visitor had said only "asthma".
   That is why the heading says the notes can be wrong and are not a decision.
+- **The verdict check reads wording.** It drops a note worded as a decision ("you
+  qualify", "this study is not for you", "you must stop your inhaler"). A new way of saying
+  the same thing can get past it. The independent review found seven such phrasings,
+  and they are now tests; the check was then run over every note the eval's models wrote,
+  and dropped none of them.
+- **Some tests check by name or by text.** The never-actions test fails on an action
+  named like `contact` or `send`, or marked irreversible; an action named some other way
+  that opened a `mailto:` link would pass it. The source checks look for words such as
+  `localStorage`; a name built from pieces would pass them. Nothing like that is in the
+  code. Code review is what catches it.
 
 ## What the eval showed
 

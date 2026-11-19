@@ -137,6 +137,32 @@ test("W2: an explanation that decides for the visitor is a verdict", () => {
   }
 });
 
+// Task 10d. The independent review (docs/REVIEW-task-10.md, finding 1.1) found these
+// passing the filter; the first seven are its own examples.
+test("W2: a verdict or an instruction in other words is still a verdict", () => {
+  for (const verdict of [
+    "You would be excluded from this study.",
+    "You can't be in this study.",
+    "This study is not for you.",
+    "You are a good candidate for this study.",
+    "You meet this requirement.",
+    "You must stop taking metformin first.",
+    "You need to stop your inhaler before joining.",
+    "You don't meet this one.",
+    "You fit the criteria.",
+    "You're a match for this study.",
+    "You would not be able to join.",
+    "This rules you out.",
+    "The visitor meets this criterion.",
+    "You have to stop your medicine two weeks before.",
+    "Stop taking your inhaler before the first visit.",
+    "Do not take your usual medicine that day.",
+    "This study isn't right for you.",
+  ]) {
+    assert.equal(givesVerdict(verdict), true, `should be a verdict: ${verdict}`);
+  }
+});
+
 test("W2: an explanation that reports what the record and the visitor said is not a verdict", () => {
   for (const fine of [
     "The visitor said they are 54, and the study takes ages 18 to 75.",
@@ -144,6 +170,13 @@ test("W2: an explanation that reports what the record and the visitor said is no
     "The record asks for 12 months of diagnosed asthma; the visitor said 3 years.",
     "Ask the study team how they measure this.",
     "This is one of the study's rules about who can take part.",
+    // Task 10d: the wider filter must still let honest notes through.
+    "The record excludes people with type 1 diabetes; the visitor said type 2.",
+    "The study may ask people to stop some medicines first; ask the study team which.",
+    "The visitor did not say whether they take metformin.",
+    "People who smoke are excluded by this rule; the visitor did not say whether they smoke.",
+    "The record does not say how this is measured.",
+    "Take this question to the study team.",
   ]) {
     assert.equal(givesVerdict(fine), false, `should not be a verdict: ${fine}`);
   }
@@ -347,8 +380,21 @@ test("W2: a question the agent puts on the sheet must be a question, and must no
     "You should join this study?",
     "Email the study team at hostile@example.test",
     "",
+    // Task 10d: the review's examples (finding 1.1), and more of the same kind.
+    "I qualify, right?",
+    "Since I meet every criterion, when can I start?",
+    "I'm eligible, so what happens next?",
+    "As I fit the criteria, how do I sign up?",
   ]) {
     assert.equal(isSheetQuestion(bad), false, `should be refused: ${bad}`);
+  }
+  for (const fine of [
+    "Do I qualify for this study?",
+    "Which of these criteria do I meet?",
+    "How would I know if I qualify?",
+    "What happens if I don't meet one of the criteria?",
+  ]) {
+    assert.equal(isSheetQuestion(fine), true, `should be accepted: ${fine}`);
   }
 });
 

@@ -106,6 +106,8 @@ for (const [file, css] of Object.entries(SHEETS)) {
     assert.equal(property(css, ".footer-links a", "display"), "inline-block");
     assert.equal(property(css, "#agent-app .ns-modal-card > .ns-modal-close", "height"), "2.75rem");
     assert.match(css, /#agent-app \.ns-consent-actions button,[\s\S]*?\{ min-height: 2\.75rem; \}/, "the runtime's buttons and fields too");
+    // Task 10d (review finding 5.2): the runtime's API key help link was 19 px tall.
+    assert.match(css, /#agent-app \.ns-key-help > a \{ display: inline-block; padding-block: 0\.6rem; \}/);
   });
 
   test(`${file}: the chat fits a small screen, and reduced motion is respected`, () => {

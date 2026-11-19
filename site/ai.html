@@ -63,7 +63,7 @@
             <td>Never. The site is plain files; it has no server that receives anything.</td>
           </tr>
           <tr>
-            <td>A short question: the condition and what you asked, never your age, sex or place unless you asked for exactly that</td>
+            <td>A short question: the condition and what you asked. The assistant is told to leave out your age, sex and place unless you asked for exactly that.</td>
             <td>The assistant of Fernhollow Asthma Friends, a partner site (an invented support group, for this demonstration)</td>
             <td>Only when the assistant wants to ask it, and only after you agree on a card that names it. Your browser then downloads that site's public assistant files, and its assistant reads the question here in your browser, using your AI provider. Nothing you type is sent to that site's server.</td>
           </tr>
@@ -106,8 +106,8 @@
         <li>Only studies the page has shown can go on your shortlist.</li>
         <li>Notes on a study's rules are refused until the page has fetched that study's record.</li>
         <li>Each note must quote the study's own words, found in its record. A quote that is not there is dropped. The note then shows that whole rule as the record words it, not the AI's copy of it.</li>
-        <li>Each note says only "Likely meets", "Likely does not meet" or "Cannot tell: ask the study team", under a heading that says the notes are written by AI and are not a decision. A note that decides for you whether you can take part is dropped.</li>
-        <li>Questions the assistant adds to your sheet must be questions, and must not decide for you whether you can take part.</li>
+        <li>Each note says only "Likely meets", "Likely does not meet" or "Cannot tell: ask the study team", under a heading that says the notes are written by AI and are not a decision. A note worded as a decision on whether you can take part, or as an instruction to you, is dropped. This check looks for such wording; it cannot catch every way of saying it.</li>
+        <li>Questions the assistant adds to your sheet must be questions. One worded as a decision on whether you can take part is refused.</li>
         <li>Text written by a study's sponsor is marked as such for the AI, as something to read, never as instructions to follow.</li>
       </ul>
 
@@ -115,6 +115,8 @@
       <ul>
         <li><strong>The assistant's own words in the chat are written by the AI.</strong> The code cannot stop it saying something wrong there. The cards, the study details and the rules in the study's own words on the page come from the record. When the chat and the page differ, trust the page, and ask the study team.</li>
         <li><strong>The assistant changes the page without asking first:</strong> it can search, open a study, change your shortlist, add notes and make your sheet. You can see each change and undo it on the page. It cannot print; printing is your own button.</li>
+        <li><strong>What the assistant writes to a partner site.</strong> It is told to send only the condition and your question. The code makes sure nothing else is sent, but it cannot check the words of that question. The card shows the question before you agree.</li>
+        <li><strong>Whether a note is right.</strong> The code checks that a note quotes the record and is not worded as a decision. It cannot check that "Likely meets" or "Likely does not meet" is the right call.</li>
         <li>AI can be wrong, and so can a record. Only the study team can say whether you can take part.</li>
       </ul>
 

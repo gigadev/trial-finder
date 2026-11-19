@@ -79,7 +79,12 @@ test("D6: the AI page names every place anything is sent, and says nothing goes 
     "Never. The site is plain files; it has no server that receives anything.",
     "Never. The assistant asks no site but Fernhollow Asthma Friends, and only after you agree.",
     "only after you agree on a card that names it",
-    "never your age, sex or place unless you asked for exactly that",
+    // Task 10d (review finding 2.2): what goes in the question is the AI's choice, not
+    // the code's, so the page says the assistant is told, and lists it as not checked.
+    "The assistant is told to leave out your age, sex and place unless you asked for exactly that.",
+    "The code makes sure nothing else is sent, but it cannot check the words of that question.",
+    "It cannot check that \"Likely meets\" or \"Likely does not meet\" is the right call.",
+    "it cannot catch every way of saying it.",
     "Nothing you type is sent to that site's server.",
     "it cannot search for them",
     "They are not sent to the AI provider",

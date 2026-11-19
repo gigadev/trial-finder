@@ -22,7 +22,7 @@ Atlas (a directory and conformance checker). None covers clinical studies.
 of `-` if you want it shown; the other rows use either a name or `-`):
 
 ```markdown
-|https://trial-finder.pages.dev/|Trial Finder| Finds clinical studies in the public ClinicalTrials.gov records, explains who each study is for in plain words, and prepares a sheet of questions for your doctor. Never says whether you can take part, and contacts no one. Runs on the visitor's own key; callable by peers.| - | [Link](https://trial-finder.pages.dev/trial_finder.network.json) |
+|https://trial-finder.pages.dev/|Trial Finder| Finds clinical studies in the public ClinicalTrials.gov records, explains who each study is for in plain words, and prepares a sheet of questions for your doctor. Built not to decide whether you can take part, and contacts no one. Runs on the visitor's own key; callable by peers.| - | [Link](https://trial-finder.pages.dev/trial_finder.network.json) |
 ```
 
 Both addresses answered on Nov 19, 2026 (the network file as `application/json`,
@@ -52,8 +52,9 @@ Adds Trial Finder (https://trial-finder.pages.dev/) to `docs/agentic_websites.md
 Trial Finder helps patients and caregivers find clinical studies in the public
 ClinicalTrials.gov records. Its assistant runs in the visitor's browser on the visitor's
 own model key, explains each study's criteria in plain words, and prepares a sheet of
-questions for their doctor. It never says whether someone can take part and never
-contacts anyone; those rules are enforced in the site's own code, with tests.
+questions for their doctor. It never contacts anyone, and it is built not to decide
+whether someone can take part: the notes it puts on the page are checked in the site's own
+code, with tests, and the chat is told not to by its instructions.
 
 - Network file: https://trial-finder.pages.dev/trial_finder.network.json
 - Other sites' agents can call it; it can call a partner site after the visitor agrees.

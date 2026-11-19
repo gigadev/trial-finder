@@ -154,6 +154,19 @@ const VERDICTS = [
   /\byou\s+(?:can|could|may|will|cannot|can't|can\s+not|could\s+not|couldn't|won't|will\s+not)\s+(?:not\s+)?(?:join|take\s+part|enrol|enroll|participate|sign\s+up)\b/i,
   /\byou\s+(?:will|would)\s+(?:not\s+)?be\s+(?:accepted|enrolled|enroled|admitted|turned\s+away|rejected)\b/i,
   /\byou\s+should\b/i,
+  // Task 10d (docs/REVIEW-task-10.md, finding 1.1): the same verdicts in other words.
+  // Each one has "you" (or the visitor) as its subject, so a note that reports what the
+  // record says ("people who smoke are excluded") still passes.
+  /\byou(?:'re|\s+are|'d\s+be|\s+would\s+be|\s+will\s+be|'ll\s+be)\s+(?:not\s+)?(?:excluded|ruled\s+out|included|a\s+(?:\w+\s+)?(?:candidate|match|fit))\b/i,
+  /\byou\s+(?:can|could|may|will|would|cannot|can't|couldn't|won't|wouldn't)\s+(?:not\s+)?(?:be\s+(?:in|part\s+of|included|excluded)|be\s+able\s+to\s+(?:join|take\s+part|enrol|enroll|participate))\b/i,
+  /\byou\s+(?:do\s+not\s+|don't\s+|do\s+)?(?:meet|fit|satisfy|fulfil|fulfill|fail|pass)\b/i,
+  /\bthe\s+visitor\s+(?:does\s+not\s+|doesn't\s+)?(?:meets?|fits?|satisf(?:y|ies)|fulfils?|fulfills?|fails?|pass(?:es)?)\b/i,
+  /\b(?:rules?|counts?)\s+you\s+out\b/i,
+  /\bexcludes?\s+you\b/i,
+  /\bstudy\s+(?:is|isn't|is\s+not)\s+(?:not\s+)?(?:for|right\s+for|suitable\s+for|meant\s+for|open\s+to|a\s+(?:\w+\s+)?fit\s+for)\s+you\b/i,
+  // Instructions to the visitor: what they must do, above all with their medicine.
+  /\byou\s+(?:must|need\s+to|have\s+to|ought\s+to|will\s+have\s+to|would\s+(?:need|have)\s+to|'d\s+(?:need|have)\s+to|'ll\s+(?:need|have)\s+to)\b/i,
+  /(?:^|[.!;:]\s+)(?:(?:do\s+not\s+|don't\s+)?(?:stop|start|change|increase|decrease|reduce|skip|pause|discontinue|switch)|(?:do\s+not|don't)\s+(?:take|use))\s+(?:taking\s+|using\s+)?(?:your|any|all|the|this|that|it)\b/i,
 ];
 
 /** True when the text decides for the visitor whether they can take part, or tells them what to do. */
@@ -165,6 +178,11 @@ const SHEET_STATEMENTS = [
   /\byou\s+(?:do\s+)?(?:qualify|meet\s+the\s+criteria)\b/i,
   /\byou(?:'re|\s+are)\s+(?:not\s+)?(?:eligible|ineligible)\b/i,
   /\byou\s+should\b/i,
+  // Task 10d (finding 1.1): the visitor stating their own verdict ("I qualify, right?",
+  // "Since I meet every criterion..."). Asked as a question ("Do I qualify?", "if I
+  // qualify") it is fine, so the words after do, would, if and the like are left alone.
+  /(?<!\b(?:do|does|did|would|could|will|can|might|if|whether)\s+)\bI\s+(?:qualify|meet|fit|satisfy)\b/i,
+  /\bI(?:'m|\s+am)\s+(?:eligible|a\s+(?:\w+\s+)?(?:candidate|match|fit))\b/i,
 ];
 
 /**

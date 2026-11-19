@@ -36,7 +36,7 @@ re-run that checked the change.
 
 ### Baseline, 2026-11-19 (`alibaba/qwen3.8-flash`, 0.8.0 / 0.2.0)
 
-No case failed. These problems were seen inside passing cases. None is fixed yet.
+No case failed. These problems were seen inside passing cases. None was fixed at the time of this run; the cut quotes were fixed after task 9 (OPEN_QUESTIONS.md B21).
 
 | Seen in | What happened | Where the fault is |
 | --- | --- | --- |

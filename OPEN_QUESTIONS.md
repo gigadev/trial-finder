@@ -768,6 +768,49 @@ Settled while building:
 - **The "DevPost Team" column is left as `-`** for Scott to fill in or leave. His name is
   not written in by the builder.
 
+### B24. Task 10d: what the independent review found, and what changed
+
+The review is `docs/REVIEW-task-10.md`, saved unedited. Scott chose to fix every item
+the builder listed (Nov 19, 2026). No instruction changed, so no eval re-run.
+
+- **W2, the verdict filter (finding 1.1), fixed tests first.** `givesVerdict` now also
+  catches "you would be excluded", "this study is not for you", "you are a good
+  candidate", "you meet this", "you must / need to / have to …", and medicine
+  instructions such as "stop taking your inhaler". `isSheetQuestion` refuses a question
+  that states the visitor's own verdict ("I qualify, right?", "Since I meet every
+  criterion…"); "Do I qualify?" and "if I qualify" are still accepted. Each new pattern
+  needs "you", "I" or "the visitor" as its subject, so a note that reports the record
+  ("people who smoke are excluded") still passes. Run over all 78 notes the eval's four
+  models wrote, it drops none.
+- **The stray "null" (finding 5.1), fixed tests first.** A study with no notes put an
+  empty part on the page, which the browser printed as "null". The test stub keeps such
+  a part as a child, so the new test can see it.
+- **Text that said more than the code does (findings 2.1 to 2.6):** `ai.html` now says
+  the verdict check reads wording and cannot catch every phrasing, that what goes to a
+  partner is the assistant's choice (D8), and lists both under what the code cannot
+  check; `data.html` no longer lists a zip code; `about.html` says the assistant explains
+  in plain words, not the page; Fernhollow says Trial Finder's assistant tells it what
+  Trial Finder offers, not that it searches; `eval/RESULTS.md` notes the cut quotes were
+  fixed (B21); `GUARDRAILS.md` and the site-list entry say "built not to decide", not
+  "never says".
+- **Small fixes:** phase "NA" reads "No phase given (not applicable)", not "not a drug
+  study" (finding 3.5); the runtime's API key help link is 38 px tall (finding 5.2).
+- **Known limits, written down, not changed (findings 1.2, 1.5):** the never-actions test
+  checks names and effects, and the source checks look for words. Both are in
+  `GUARDRAILS.md` under what code does not enforce.
+- **Open for Scott: `get_trial` accepts any well-formed study id (finding 1.3).**
+  HANDOFF §8 rule 2 and standard W5 say an id is accepted only if this session fetched
+  it. `get_trial` is the fetch: it takes any id shaped like NCT and 8 digits, including
+  one the visitor typed, and asks the public database for that record. The shortlist
+  and notes do keep the rule. **My pick: keep it as it is,** because a visitor may
+  rightly paste a study id, and fetching a public record contacts no one and changes
+  only what the page shows; then reword W5 to say the rule covers the shortlist and the
+  notes. Changing W5's words is a change to a hard rule's text, so it waits for Scott's
+  written yes and its own pull request (B8).
+- **Not acted on (Scott's to decide, findings 4 and 6):** real sponsor and drug names in
+  screenshots of real use, the trademark checks, decision 3, T8, confirming the eval
+  grades, and the About page name (B17).
+
 ---
 
 ## C. Decisions waiting on Scott
@@ -778,3 +821,4 @@ Settled while building:
 | 2 | ~~What the partner's call to us shows~~ **Answered Nov 18: a plain link, no condition in the address (B18)** | A4 | A plain link | Task 7 plan |
 | 3 | ~~Page CSP against "any provider URL"~~ **Default taken Nov 18 (B19); Scott to confirm** | B5 | Listed providers plus the visitor's own machine | Task 8 |
 | 4 | `vendor/agentify-website/` as a development tool | B9 | Yes | Task 1 commit |
+| 5 | `get_trial` takes any well-formed study id; W5 says only ids this session fetched (review finding 1.3) | B24 | Keep it; reword W5 to cover the shortlist and notes, in its own pull request | Before submission |

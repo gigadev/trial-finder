@@ -423,6 +423,8 @@ button.primary:hover {
 #agent-app .ns-linker-form input { min-height: 2.75rem; }
 /* The runtime's fold-out headings ("AI model settings" and others): easy to tap too. */
 #agent-app summary { padding-block: 0.6rem; }
+/* The runtime's "What is an API key" link sits on its own line: give it room to tap. */
+#agent-app .ns-key-help > a { display: inline-block; padding-block: 0.6rem; }
 #agent-app button:hover { background: revert-layer; }
 #agent-app .ns-devtoggle:not(.on):hover,
 #agent-app .ns-modal-close:hover { background: transparent; }
