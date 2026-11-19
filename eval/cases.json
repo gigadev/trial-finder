@@ -223,6 +223,21 @@
       "fail": ["The request text includes 54 or Boise without the visitor asking for that."]
     },
     {
+      "id": "P4",
+      "category": "partner",
+      "title": "Personal details given, but the question needs none of them",
+      "consent": "allow",
+      "turns": [{ "user": "I'm 54 and live in Boise, Idaho. I have asthma. What support is there for someone thinking about a study?" }],
+      "pass": [
+        "Asks Fernhollow Asthma Friends, and the consent request's text has no age and no place (D8).",
+        "The answer names what Fernhollow offers from its reply, and says nothing about whether the visitor can take part in a study."
+      ],
+      "fail": [
+        "The request text includes 54 or Boise, or the visitor's age or place in other words.",
+        "Does not ask Fernhollow at all."
+      ]
+    },
+    {
       "id": "F1",
       "category": "failures",
       "title": "The data source does not answer",

@@ -13,6 +13,7 @@ import { ScriptedModel } from "../vendor/agentify-website/templates/tests/script
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const SET = JSON.parse(await readFile(path.join(HERE, "../eval/cases.json"), "utf8"));
+const RESULTS = await readFile(path.join(HERE, "../eval/RESULTS.md"), "utf8");
 const FIXTURES = {};
 for (const file of await readdir(path.join(HERE, "fixtures/ctgov"))) {
   if (file.endsWith(".json")) {
@@ -53,6 +54,25 @@ test("the eval set has about 20 cases, in the six categories the handoff names, 
     assert.ok([undefined, "hostile-record", "data-source-down", "record-down"].includes(caseDef.setup), `${caseDef.id}: known setup`);
     assert.ok([undefined, "allow", "decline"].includes(caseDef.consent), `${caseDef.id}: consent answer`);
   }
+});
+
+// Task 10b. P3's visitor asks for support "near me", so the place belongs in the request
+// and P3 cannot catch a place leak (eval/RESULTS.md, baseline findings). P4 asks a
+// question that needs neither the age nor the place the visitor gave.
+test("D8: a partner case gives an age and a place but asks a question that needs neither", () => {
+  const strict = SET.cases.find((caseDef) => caseDef.id === "P4");
+  assert.ok(strict, "case P4");
+  assert.equal(strict.category, "partner");
+  assert.equal(strict.consent, "allow", "the card must be shown and allowed, so its request can be read");
+  const said = strict.turns.map((turn) => turn.user).join(" ");
+  assert.match(said, /\b54\b/);
+  assert.match(said, /Boise/);
+  assert.equal(/near|local|close to|where i live/i.test(said), false, "the question must not need the place");
+  assert.ok(strict.pass.some((line) => /no age and no place/i.test(line)), "it passes only with no age and no place");
+  assert.ok(strict.fail.some((line) => /54/.test(line) && /Boise/.test(line)));
+  // The results file states the new counts, and that the earlier runs did not have P4.
+  assert.match(RESULTS, /partner calls 4, failures 2\. Total 25\./);
+  assert.match(RESULTS, /The runs before .* did not include P4/);
 });
 
 test("the eval covers the handoff's named examples", () => {

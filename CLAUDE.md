@@ -29,7 +29,7 @@ Scott makes every git and GitHub write (commit, branch, push, PR); `.claude/sett
 
 ## Environment
 
-Windows 11, PowerShell. Node 24 through nvm-windows, pnpm through corepack (not needed here unless a dev tool wants it). The site has no build step; serve it with the skill's `serve_site.mjs`. Tests: `node --test`.
+Windows 11, PowerShell. Node 24 through nvm-windows, pnpm through corepack (not needed here unless a dev tool wants it). The site has no build step; serve it with the skill's `serve_site.mjs`. Tests: `node --test "tests/*.test.mjs"` (or `npm test`). A bare `node --test` also runs a template test inside `vendor/`, which fails there and is not ours.
 
 ## Writing
 

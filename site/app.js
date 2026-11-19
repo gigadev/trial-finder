@@ -154,7 +154,7 @@ export class TrialFinderPage {
       "results-heading", "results-summary", "results-list", "more-results", "results-source", "study",
       "study-heading", "study-body", "study-close", "shortlist-heading", "shortlist-empty", "shortlist-list",
       "shortlist-error", "make-sheet", "sheet", "sheet-heading", "sheet-body", "sheet-questions", "sheet-error",
-      "sheet-update", "sheet-print", "sheet-close", "jump-links", "jump-list"]) {
+      "sheet-update", "sheet-print", "sheet-close", "jump-links", "jump-list", "assistant-heading"]) {
       this.nodes[id] = document.getElementById(id);
     }
     this.connectButtons();
@@ -497,7 +497,9 @@ export class TrialFinderPage {
     link.setAttribute("href", study.link);
     link.setAttribute("target", "_blank");
     link.setAttribute("rel", "noopener noreferrer");
-    line.append(link);
+    // On paper a link cannot be clicked: the printed sheet gives the address in full.
+    link.className = "no-print";
+    line.append(link, this.make("span", `The full record: ${study.link}`, "print-only"));
     return line;
   }
 
@@ -589,11 +591,22 @@ export class TrialFinderPage {
     const notes = this.notes.get(study.id);
     if (!notes) return null;
     const head = this.make("tr");
-    head.append(this.make("th", "The study's words"), this.make("th", "Note"), this.make("th", "Why"));
+    const column = (text) => {
+      const cell = this.make("th", text);
+      cell.setAttribute("scope", "col");
+      return cell;
+    };
+    head.append(column("The study's words"), column("Note"), column("Why"));
     const body = this.make("tbody");
     for (const item of notes.items) {
       const row = this.make("tr", undefined, `note-${item.status.replace(/_/g, "-")}`);
-      row.append(this.make("td", item.criterion), this.make("td", NOTE_WORDS[item.status]), this.make("td", item.why));
+      // On a phone the header row is hidden and each cell shows its column's name.
+      const cell = (label, text) => {
+        const td = this.make("td", text);
+        td.setAttribute("data-label", label);
+        return td;
+      };
+      row.append(cell("The study's words", item.criterion), cell("Note", NOTE_WORDS[item.status]), cell("Why", item.why));
       body.append(row);
     }
     const table = this.make("table", undefined, "notes-table");
@@ -687,7 +700,9 @@ export class TrialFinderPage {
     else if (status === "done" && this.results) {
       line = this.results.nothingMatches
         ? "The search finished. No studies match."
-        : `The search finished. ${this.results.studies.length} studies are shown.`;
+        : this.results.studies.length === 1
+          ? "The search finished. 1 study is shown."
+          : `The search finished. ${this.results.studies.length} studies are shown.`;
     }
     this.nodes.status.textContent = line;
   }
@@ -828,7 +843,9 @@ export class TrialFinderPage {
     nodes["more-results"].addEventListener("click", () => { this.moreResults(); });
     nodes["study-close"].addEventListener("click", () => {
       this.closeStudy();
-      nodes["results-heading"].focus();
+      // The assistant can open a study with no results showing; a hidden heading would
+      // lose focus, so it goes back to the assistant then.
+      (nodes.results.hidden ? nodes["assistant-heading"] : nodes["results-heading"]).focus();
     });
     const makeSheet = async () => {
       const lines = String(nodes["sheet-questions"].value ?? "").split("\n").filter((line) => line.trim() !== "");

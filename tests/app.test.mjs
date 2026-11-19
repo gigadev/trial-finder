@@ -423,6 +423,14 @@ test("the sheet: shortlisted studies with criteria word for word, questions, sou
   assert.ok(text.includes(JSON.parse(FIXTURES.version.body).dataTimestamp.slice(0, 10)));
   assert.ok(text.includes(`Record last updated ${raw.statusModule.lastUpdatePostDateStruct.date}`));
   assert.ok(STANDARD_QUESTIONS.some((question) => question.includes("costs") && question.includes("insurance")));
+  // On paper a link cannot be clicked, so the printed sheet gives the record's address
+  // in full; the "new tab" link is for the screen only (task 10a, print check).
+  const sourceLine = node("sheet-body").querySelectorAll("p").find((p) => p.className === "source" && p.textContent.includes(STUDY_ID));
+  const link = sourceLine.querySelectorAll("a")[0];
+  assert.equal(link.className, "no-print");
+  const printed = sourceLine.querySelectorAll("span").find((span) => span.className === "print-only");
+  assert.equal(printed.textContent, `The full record: ${link.getAttribute("href")}`);
+  assert.match(link.getAttribute("href"), new RegExp(`^https://clinicaltrials\\.gov/study/${STUDY_ID}$`));
 
   page.closeSheet();
   assert.equal(node("sheet").hidden, true);
@@ -555,6 +563,32 @@ test("T1: the search form runs the same search, and shows the data layer's own r
   assert.ok(node("search-error").textContent.includes("whole number"));
 });
 
+// Task 10a: the live search said "1 studies are shown".
+test("the search status counts in plain English: one study, two studies", async () => {
+  const { page, node } = await readyPage();
+  await page.searchStudies(ASTHMA);
+  assert.equal(node("status").textContent, "The search finished. 1 study is shown.");
+  await page.searchStudies(DIABETES);
+  assert.equal(node("status").textContent, "The search finished. 3 studies are shown.");
+});
+
+// Task 10a: the assistant can open a study when no results are showing. Focus must not
+// go to a hidden heading, where it would be lost.
+test("closing a study's details hands focus to a heading the visitor can see", async () => {
+  const opened = await readyPage();
+  await opened.page.openStudy(STUDY_ID);
+  assert.equal(opened.node("results").hidden, true);
+  opened.node("study-close").dispatch("click");
+  assert.equal(opened.node("assistant-heading").focused, true, "no results: back to the assistant");
+  assert.notEqual(opened.node("results-heading").focused, true);
+
+  const searched = await readyPage();
+  await searched.page.searchStudies(ASTHMA);
+  await searched.page.openStudy(STUDY_ID);
+  searched.node("study-close").dispatch("click");
+  assert.equal(searched.node("results-heading").focused, true, "with results: back to them");
+});
+
 test("methods do not move focus; only the page's own button handlers do", async () => {
   const { page, document } = await readyPage();
   await page.searchStudies(ASTHMA);
@@ -674,6 +708,13 @@ test("W2, C10: notes show under a fixed heading and disclaimer, in three fixed s
   assert.ok(block, "the notes block is in the study's details");
   const headings = block.querySelectorAll("h4").map((h) => h.textContent);
   assert.deepEqual(headings, [WORDING.notesHeading]);
+  // Header cells name their columns, so a screen reader reads each cell with its column.
+  const heads = block.querySelectorAll("th");
+  assert.deepEqual(heads.map((th) => [th.textContent, th.getAttribute("scope")]),
+    [["The study's words", "col"], ["Note", "col"], ["Why", "col"]]);
+  // On a phone the header row is hidden; each cell carries its column's name instead.
+  assert.deepEqual(block.querySelectorAll("tbody")[0].children[0].children.map((td) => td.getAttribute("data-label")),
+    ["The study's words", "Note", "Why"]);
   assert.equal(block.querySelectorAll("p")[0].textContent, WORDING.notesDisclaimer);
   const rows = block.querySelectorAll("tbody")[0].children;
   assert.deepEqual(rows.map((row) => row.children.map((cell) => cell.textContent)), [

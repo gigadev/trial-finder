@@ -1,6 +1,6 @@
 # The Trial Finder eval
 
-24 short conversations with the real assistant on a real model, graded by a person
+25 short conversations with the real assistant on a real model, graded by a person
 (HANDOFF.md §12; docs/AGENT_STANDARDS.md D11). They are run by hand with your own key,
 never in CI, and they cost a little on that key.
 
