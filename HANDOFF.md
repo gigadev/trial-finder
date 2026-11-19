@@ -3,10 +3,66 @@
 **Owner:** Scott Shepherd (personal project, Gigadev). **Builder:** Claude Opus (Claude Code), in a new session.
 **Written:** Nov 17, 2026. **Submission deadline:** Monday Jan 11, 2027, 8:00 am Pacific. **Target: feature-complete by Dec 20, 2026.**
 **Working name:** "Trial Finder" (Scott picks the real name, §16 q1). **Status:** accepted Nov 17, 2026; §16 is answered (the defaults).
+**Updated:** Nov 19, 2026, after task 9 and the guard fix. **Tasks 1 to 9 are built, merged and live. Start at §0, then go to task 10 in §13.**
 
 Read this file, then `docs/AGENT_STANDARDS.md`, then `CLAUDE.md`. Then read the challenge's own documents listed in §2, because they are the source of truth for the spec and this file only summarises them. Where this file and the challenge's documents disagree, theirs win; write the difference in `OPEN_QUESTIONS.md` and keep going.
 
 ---
+
+## 0. Where the build stands (Nov 19, 2026)
+
+A new session starts here. Sections 1 to 12 were written before the build; they are corrected where the build went another way, and each correction says so. The full record of every decision is `OPEN_QUESTIONS.md` (sections A, then B1 to B21). Read B15, B18, B19, B20 and B21 before changing anything they cover.
+
+**Done and merged** (pull requests 1 to 10, CI green):
+
+| Task | What exists |
+| --- | --- |
+| 1 | Layout, the runtime copied unchanged at upstream commit `47cce0fe8790c8e911b5924bcb500a00e0382004` (hashes kept by `tests/scaffold.test.mjs`), the whole skill in `vendor/agentify-website/` as a development tool, CI |
+| 2 | `site/trials-api.js`, recorded fixtures, `docs/CLINICALTRIALS_API.md` |
+| 3 | The page without AI: search, cards, details, shortlist, sheet, the first-search notice, a top menu |
+| 4, 5, 6 | Two agents, five site actions, `site/guard.js`, the four plain pages |
+| 7 | The partner site, Fernhollow Asthma Friends (invented), linked both ways |
+| 8 | Both sites live on Cloudflare Pages: `https://trial-finder.pages.dev/` and `https://fernhollow-asthma-friends.pages.dev/` |
+| 9 | The eval: 24 cases, four models run, `alibaba/qwen3.8-flash` kept as the default (24/24) |
+| after 9 | The guard shows the record's whole criterion, never a cut piece (B21) |
+
+**Left:** task 10 and task 11 (§13).
+
+**The numbers a change must respect:**
+
+- 184 tests. Run them with `node --test "tests/*.test.mjs"` (or `npm test`). **A bare `node --test` also picks up a template test inside `vendor/` and fails; that is not our failure.**
+- Instructions: Trial Finder version 0.8.0, **4,997 of 5,000 characters used on the front agent**. There is room for three more characters. Any new line means removing one. Fernhollow is version 0.2.0, 3,432 characters.
+- A change to a `.hocon` file means: rebuild with `build_network.mjs`, raise the version, update the version in `site/index.html`'s footer, and **run the eval again before it ships** (standards C11, D11). Scott runs the eval; it needs his key. So change the instructions only when a finding needs it, and batch such changes.
+- Runtime limits: 24 agent calls and 90 seconds per visitor message, 4 partner calls, 1 per partner.
+
+**How the build differs from the plan below**
+
+| Planned | Built | Why (where) |
+| --- | --- | --- |
+| Three agents, six actions | Two agents (`trial_guide`, `study_explainer`), five actions | The runtime offers every agent every site action, so tools are counted per agent as offered; the front agent makes the sheet itself (B15, B17) |
+| `visit_prep` agent | None | Cut as §13 allowed |
+| `search_trials` and `get_trial` are `read` | Both are `write` | They change what the page shows (B15) |
+| `get_shortlist` and `update_shortlist` | One action, `shortlist`, with add, remove or list | Tool count (B16) |
+| A `trial_facts` network for callers | The same network is called; a called network gets no site tools, so it answers with what Trial Finder does and its address | Scott's decision (B18) |
+| Partner replies labelled untrusted in code | Not possible: the runtime hands the reply to the model | T8 is not met for partner replies (B18) |
+| The model's quote shown in a note | The record's whole criterion shown | The eval found cut quotes (B21) |
+| HOCON sources in `network/` | `site/trial_finder.hocon` and `partner/support_desk.hocon`, built in place | The build script's layout |
+| A page CSP for the settings panel's providers | Those, plus OpenRouter and the visitor's own machine | Decision 3, default taken (B19) |
+
+**What the eval and Scott's tests taught us about the model** (so nobody is surprised):
+
+- The page's cards and notes are code and are right. The chat's words are the model's and can be wrong. `ai.html` says so.
+- Small models sometimes skip a search and invent studies (one candidate did), ask for age and sex instead of searching, or write a tool call out as text. The default did none of these in its one run. One run is one sample.
+- Providers fail too: one candidate's run had seven HTTP 502 errors, and the default's had one 429. The page works without AI when that happens.
+- "Delete setup" in the runtime's settings removes the saved key only; the open tab keeps using it until it is closed. `ai.html` says so. It is the runtime's behaviour and not ours to change.
+
+**Working notes for the builder**
+
+- Windows 11, PowerShell. Use the file tools for edits. Shell here-documents have mangled regular expressions and quotes in this repository more than once; for anything longer than a line, write a script file in the scratchpad and run it.
+- Preview: `.claude/launch.json` has `trial-finder-site` (port 8080, as `localhost`) and `fernhollow-partner` (port 8091, as `127.0.0.1`). The local copies call each other at the **live** addresses.
+- Anything that needs a model key is run by Scott in his own terminal. Never ask for a key in chat.
+- Scott's branch names: `features/ss.task-10-polish`, and so on. When he asks for "PR info", give a title and a description in fenced blocks.
+- Cloudflare deploys `main` on every merge. After the submission, **nothing merges to `main` until Jan 18, 2027** (§13, task 11).
 
 ## 1. What we are building, and why
 
@@ -67,7 +123,7 @@ Known neighbours on the challenge's list (`docs/agentic_websites.md` in their re
  │  shows consent cards, holds the visitor's key                          │
  │    │ network of agents, described as data in a public .json file       │
  │    │   trial_guide (front) ─▶ study_explainer                          │
- │    │                      └─▶ visit_prep                               │
+ │    │   (as built: two agents; the front agent makes the sheet)         │
  └────┼──────────────────────────────┬───────────────────┬───────────────┘
       ▼ (1) the conversation          ▼ (2) search terms   ▼ (3) a request, after consent
   The AI provider the visitor      ClinicalTrials.gov     The partner site's network
@@ -77,7 +133,7 @@ Known neighbours on the challenge's list (`docs/agentic_websites.md` in their re
 - **Where the model runs.** Nowhere of ours. The runtime calls the provider the visitor configured, directly from the browser, with the visitor's key (BYOK). We host no model, pay for no calls and see no conversations.
 - **The agents are data, not code.** `trial_finder.network.json` lists each agent: a name, a description, parameters, instructions, and the tools it may call. It is public by design, so the instructions hold no secrets, and anyone (or any other site's agent) can read exactly what our agents are told to do.
 - **The tools are site actions.** Small JavaScript functions we register with the runtime: search studies, get one study, manage the shortlist, show eligibility notes, build the visit sheet. Each declares an input schema and an effect (`read` / `write` / `irreversible`). The model can only ask; our code decides, validates and does the work. **Every rule that must hold is enforced in these functions, never only in a prompt** (§8).
-- **The loop, for one question.** "I'm 54 with type 2 diabetes near Boise, what's recruiting?" → the front agent calls `search_trials` → our code calls the public API and returns trimmed, labelled records, and the page shows the same cards → the visitor asks about one → the front agent hands that study, with the facts the visitor has stated, to `study_explainer`, which fetches the record, reads the criteria and calls `show_eligibility_notes` with one line per criterion, each marked *likely meets*, *likely does not meet* or *cannot tell — ask the study team* → our code checks every quoted criterion really is in the record before showing it → `visit_prep` drafts questions and calls `build_visit_sheet`.
+- **The loop, for one question.** "I'm 54 with type 2 diabetes near Boise, what's recruiting?" → the front agent calls `search_trials` → our code calls the public API and returns trimmed, labelled records, and the page shows the same cards → the visitor asks about one → the front agent hands that study, with the facts the visitor has stated, to `study_explainer`, which fetches the record, reads the criteria and calls `show_eligibility_notes` with one line per criterion, each marked *likely meets*, *likely does not meet* or *cannot tell — ask the study team* → our code checks every quoted criterion really is in the record, and shows the record's whole criterion in its own words → the front agent calls `build_visit_sheet` with the visitor's questions.
 - **Other sites.** A peer is just another site's public network URL. Before the runtime contacts one, it shows the visitor a consent card. The peer receives only the request text: no history, no key, no private context. We use this both ways (§9).
 - **What the human always controls.** Which site they visit, which provider and key, whether a peer is contacted, what goes on the shortlist, and whether to print. The agent never sends, books, emails or enrols.
 
@@ -89,9 +145,9 @@ The *Claude Certified Architect – Foundations* and *Claude Certified Developer
 | --- | --- |
 | Instructions fail some of the time; what must always hold needs a deterministic check (A 1.4, A 1.5) | Every guardrail in §8 is code in the actions. We have no SDK hooks, since the runtime owns the loop, so the site action is our interception point: it validates every call before anything happens |
 | Steps that must happen in order are gated by code (A 1.4) | Eligibility notes are refused until that study has been fetched; only fetched ids are accepted |
-| A coordinator with specialists, all traffic through the coordinator, chosen per question (A 1.2, A 1.6) | One front agent, two specialists, and the front agent calls only the one a question needs |
+| A coordinator with specialists, all traffic through the coordinator, chosen per question (A 1.2, A 1.6) | One front agent and one specialist (as built), called only when a question needs it |
 | Specialists do not inherit the conversation; pass what they need explicitly (A 1.3) | The front agent hands over the study id and the visitor's stated facts as a short labelled list in the request |
-| Too many tools make an agent choose badly; four or five is the guide's healthy number (A 2.3) | No agent has more than five tools; a test fails if one grows. Adding and removing from the shortlist is one action |
+| Too many tools make an agent choose badly; four or five is the guide's healthy number (A 2.3) | No agent is offered more than five site tools, or seven tools in all (as built; the runtime offers every agent every site action); a test fails if one grows. Adding to, removing from and listing the shortlist is one action |
 | A tool's description is how it gets chosen (A 2.1) | Descriptions say purpose, input with an example, output, edge cases, and what the action is not for |
 | Errors need a category and whether a retry helps; an empty result is not a failure (A 2.2, A 5.3) | One fixed refusal block; "nothing matches" is a success; "the data source did not answer" is a transient refusal; a failed specialist reports what it tried |
 | Schemas stop malformed output, not wrong output; give the model an honest "unclear" value and optional fields (A 4.3) | The status enum has "cannot tell"; code then checks each quoted criterion against the record |
@@ -100,7 +156,7 @@ The *Claude Certified Architect – Foundations* and *Claude Certified Developer
 | A model's own confidence is a poor signal; ask when there are several matches (A 5.2) | No confidence scores anywhere; the agent asks, and hands "should I?" questions to the doctor at once |
 | Trim tool results; key facts first (A 5.1) | A fixed field list (3.6 KB instead of 212 KB for one study), capped lists, sites filtered and ranked by code |
 | Keep each claim tied to its source and date (A 5.6) | Code renders the study id, the quoted criterion and the record's date beside every note |
-| Untrusted content is kept apart from instructions and cannot trigger anything sensitive (D 7) | Record text and partner replies are labelled untrusted, and no sensitive action exists to trigger |
+| Untrusted content is kept apart from instructions and cannot trigger anything sensitive (D 7) | Record text is labelled untrusted in code. Partner replies cannot be: the runtime hands them to the model, so that part is instructions only (as built, B18). No sensitive action exists to trigger |
 | Least privilege; protect keys and personal data (D 7) | No storage, no server, no key access, no third-party scripts |
 | Pin the model and version the prompts (D 2); pick the model by cost, speed and quality (D 5) | A version string in the network file; the suggested model is pinned and chosen by the eval |
 | Find faults by reading the trace: integration or model? (D 4) | The runtime's activity view is shown to the visitor and used for debugging |
@@ -115,7 +171,7 @@ Several things in the guides do not apply and are deliberately absent: the Messa
 **In:**
 
 1. A static site that works without AI: search (condition, place, recruiting only by default, optional age and sex), result cards, study detail with criteria verbatim, shortlist, printable visit sheet.
-2. The agent: three-agent network, six site actions, the runtime's chat and settings panels.
+2. The agent: a network of two agents and five site actions (as built; planned as three and six), the runtime's chat and settings panels.
 3. Guardrails enforced in code with tests (§8), plus a hand-graded eval set (§12).
 4. One partner site on a second origin, linked in both directions (§9).
 5. Plain pages: About, How the AI works here (what is sent where), Not medical advice, Data source and changes.
@@ -142,8 +198,8 @@ site/                         the Trial Finder site (deployed as one origin)
   about.html  ai.html  not-medical-advice.html  data.html
   _headers                    CORS + worker CSP (§11)
 partner/                      the advocacy-group site (deployed as a second origin), same shape, much smaller
-network/                      HOCON sources, if the skill's build script wants them
-tests/                        node --test: unit, scripted-model, fixtures/ (recorded public API answers)
+vendor/agentify-website/      the challenge's skill, whole and unchanged: build, check and serve scripts, test stand-ins (as built)
+tests/                        node --test "tests/*.test.mjs": unit, scripted-model, fixtures/ (recorded public API answers)
 eval/                         the eval set and a runner used by hand (§12)
 docs/                         AGENT_STANDARDS.md, GUARDRAILS.md (the shared write-up), SUBMISSION.md
 ```
@@ -155,8 +211,18 @@ docs/                         AGENT_STANDARDS.md, GUARDRAILS.md (the shared writ
 - **Always pass `fields`.** One full study was 212 KB; the same study with eleven fields was 3.6 KB. Action results are capped at 64 KB by the runtime.
 - A study's `locations` list can hold dozens of sites with mixed statuses (the test search for asthma near Boise returned a study whose Boise site was `WITHDRAWN`). **Code must filter sites to recruiting ones and rank those near the visitor's stated place**, and say plainly when the nearby site is not recruiting.
 - Not verified: rate limits, the full list of field names, paging tokens, `query.term` and age filters. Read the API's own documentation page in a browser (it is a JavaScript page; plain fetches return an empty shell) and record what you find in `docs/` before task 2.
+- **As built (task 2):** `docs/CLINICALTRIALS_API.md` is the record. What differed from the lines above: a malformed id is not always refused (`NCT123` returns study `NCT00000123`), so the id shape is checked in our code; the documented age filter drops studies with no upper limit unless `MISSING` is added; `filter.geo` is not used, because we have no geocoding, and distance is a straight line from the study's own site in the visitor's city; every word of a place must match, so the place is tidied in code first; paging is by token.
 
 ## 6. The network
+
+**As built** (the table below this box is the original plan, kept for the reasoning):
+
+| Agent | Job | What it is offered |
+| --- | --- | --- |
+| `trial_guide` (front) | Talks with the visitor, searches, opens a study, keeps the shortlist, makes the sheet, hands one study and the visitor's stated facts to the explainer, and may ask Fernhollow | The five site actions, `study_explainer`, and Fernhollow's `support_desk` (seven in all, the limit) |
+| `study_explainer` | Fetches one study, compares its criteria with the stated facts, puts the notes on the page | The same five site actions (the runtime offers them to every agent); its instructions keep it to `get_trial` and `show_eligibility_notes` |
+
+The source is `site/trial_finder.hocon`; `build_network.mjs` writes the `.network.json`, the bridge files and the discovery files, and `--check` fails if they are stale. The model is `alibaba/qwen3.8-flash` on hosted Otari, in both networks. The chat's forms and tables are off (no `cruse` block). The instructions never mention the first-search notice, consent or permission: when they did, the model invented notices of its own (B15), and a test bans those words.
 
 File: `site/trial_finder.network.json`, front agent `trial_guide`. Follow `network_design.md` (it prefers few agents and has limits the checker enforces: instruction length, callable agents, 24 agent calls and 90 s per visitor message).
 
@@ -174,6 +240,18 @@ No agent has more than five tools (standards C2; a test keeps it). A specialist 
 - Which model: do not take model names from memory. Read `providers.md` and the providers' current model lists, then let the eval (§12) decide the suggested default shown in the settings panel.
 
 ## 7. Site actions
+
+**As built:** five actions, all `write`, because each changes what the page shows; the runtime runs `read` and `write` without a dialog. The model sees them as `website_<name>`.
+
+| Action | Inputs | Notes |
+| --- | --- | --- |
+| `search_trials` | condition (required), place, age, sex, recruiting_only, more | Waits for the first-search notice like the button does; `more: true` gets the next page |
+| `get_trial` | id | Free text sits under `untrusted_record_text`; the contact is shown on the page and not given to the model |
+| `shortlist` | change (add, remove or list), id | Only studies the page has shown; at most 10 |
+| `show_eligibility_notes` | id, visitor_facts, notes | Refused until that study was fetched; each quote must be in the record; the page shows the record's whole criterion (B21) |
+| `build_visit_sheet` | questions | Each must be a question and state no verdict; questions add up, at most 12 |
+
+The table below is the original plan.
 
 Names and effects are a proposal; `site_actions.md` decides what each effect means, and the checker has the last word. Input schemas use only the allowed JSON Schema subset (no `pattern`), so **format checks happen in `execute`**, which refuses with the fixed block `{ ok: false, category, retryable, reason }` (standards T4) and changes nothing. Actions return refusals and never throw.
 
@@ -209,6 +287,10 @@ The runtime is copied **unchanged** (the skill says so, and it keeps Stage 1 sim
 
 ## 9. The partner site and linking
 
+**As built (task 7, B18):** the partner is **Fernhollow Asthma Friends**, an invented asthma support group, at `https://fernhollow-asthma-friends.pages.dev/`. It has one agent (`support_desk`) and one read action over its own pages. Each site's network lists the other in `tools`, and each manifest allows only the other as a peer (`peer_policy` closed). A called network runs in the caller's tab with no site tools, so when Fernhollow asks Trial Finder, the answer says what Trial Finder does and gives its address; it cannot search from there (Scott's decision: a plain link). The bridge pages are published and frameable. `check_partner.mjs` passes all four ways on the live sites. Still open: the trademark check of the name (§16), and partner replies are not labelled untrusted in code (T8, B18).
+
+The plan as first written:
+
 - **What:** `partner/`, an **invented** patient-advocacy group for one condition (pick a name in task 7 and search for it first: no real organisation, no trademark, a `.test`-style feel in the copy and "This is a demonstration site" in the footer). A few pages of plain-language support content, and a small network (`support_desk`) with read-only actions over that content.
 - **They call us:** the partner's agent has Trial Finder's network URL in its `tools`. A visitor on the partner site asks "are there studies recruiting near me?", sees the consent card, and gets an answer from our network. This is the "be called by other agentic websites" line in the rules. `linking.md` explains what a called site must publish (exports/aliases, and an action bridge page if its actions are to work when called; otherwise the caller waits and asks for a popup). **Decide in task 7, from that document, between (a) exporting the full network with the bridge, and (b) exporting a smaller read-only `trial_facts` network.** Default: (b), the smallest thing that answers the question, since the challenge repo itself has a pull request doing this ("Publish a facts network for calling sites", #19).
 - **We call them:** `trial_guide` has the partner's `support_desk` URL in its `tools` with a `link_labels` entry; our manifest lists the partner origin in `allowed_peers` with `peer_policy.mode: "closed"`. Use: "where can I find support while I think about this?".
@@ -231,12 +313,20 @@ So:
 
 ## 11. Hosting
 
+**As built (task 8, B19):** two Cloudflare **Pages** projects (not Workers), each deploying a folder of `main` on every merge, with no build command. `site/_headers` and `partner/_headers` set everything; `tests/headers.test.mjs` simulates how Cloudflare merges them. Learned on the live sites: Cloudflare adds `Access-Control-Allow-Origin: *` to every file by itself, so the `/*` rule removes it (`! Access-Control-Allow-Origin`) and the public files add it back; repeated headers are joined with commas, so the worker and bridge rules remove the page policy before setting their own; `.html` addresses redirect to the short form, which the checker warns about and accepts. The page policy allows self, `clinicaltrials.gov`, the settings panel's providers, OpenRouter, the visitor's own machine, and the partner. A provider that is not on the list is blocked by the browser, and `ai.html` says so.
+
+The plan as first written:
+
 - Two static origins (the site and the partner). Default: two free Cloudflare Pages projects from this repository's `site/` and `partner/` folders, because a `_headers` file can set what `bundle_and_hosting.md` asks for: `Access-Control-Allow-Origin: *` on the manifest, network, `links.json` and discovery files (not on anything else), and the strict Content-Security-Policy on `runtime/sandbox-worker.js`. Netlify works the same way. Scott creates the projects and connects the repository (§16 q3).
 - HTTPS only. If a bridge page is used, it must be frameable (no `X-Frame-Options` on `bridge/`); everything else denies framing.
 - A page-level CSP that allows only: self, the AI providers the settings panel offers (see `providers.md`), `clinicaltrials.gov`, and the partner origin.
 - Locally: the skill's `serve_site.mjs` (it sends the right headers; `python -m http.server` does not).
 
 ## 12. Tests and the eval
+
+**As built:** 184 tests in `tests/`, run with `node --test "tests/*.test.mjs"`. Browser checks were done by hand in the in-app browser (no Playwright, no new dependency). The eval is `eval/` (B20): `cases.json` (24 cases), `run.mjs` (Scott runs it with `EVAL_API_KEY` set; `--list-models`, `--model`, `--cases`), graded transcripts in `runs/`, scores per category in `RESULTS.md`. A test ties both networks' model to the choice recorded in `RESULTS.md`. Known weak spot: case P3 cannot catch a place sent to the partner, because its question needs the place (task 10 adds a stricter one).
+
+The plan as first written:
 
 - **Unit (`node --test`, no network):** `guard.js` (id shape; fetched-ids-only; criterion-must-be-in-record, including whitespace and bullet differences; caps), `trials-api.js` against recorded fixtures (URL built correctly, no headers, field list, site filtering and ranking, the withdrawn-nearby-site case, 400 and network failure → `{ ok: false }`, "nothing matches" is a normal result).
 - **Scripted model (the skill's pattern: a DOM stand-in and a scripted model, no paid calls):** each action through the runtime; the hostile-record test; the three-state table renders with its fixed heading; an unknown id is refused.
@@ -265,9 +355,65 @@ One task per pull request, in order. After each: what changed, what was run with
 | 11 | Submission pack: description, "what was built during the period", screenshots, a 110-second video script and shot list | 2 h | 3 h (record, upload, submit) |
 | | **Total** | **51 h** | **about 10.5 h** |
 
+**Tasks 1 to 9 are done (§0).** Tasks 10 and 11 are set out in full below; where the rows above and the text below differ, the text below is the plan.
+
+### Task 10 in full
+
+Task 10 is split into four steps, each its own pull request, because the row above put a polish pass, two documents and an independent review into three hours. Rough effort: 10a 3 h, 10b 2 h, 10c and 10d 2 h; Scott about 1.5 h. **Do not change either `.hocon` file in 10a or 10b.** An instruction change means a new eval run (§0); save any such change for 10d, and only if a finding needs it.
+
+**10a. Polish and accessibility** (branch `features/ss.task-10-polish`). Both sites. No new dependency. Add a test for whatever can be tested from the HTML or the page object.
+
+1. **Left over from Scott's tests** (`OPEN_QUESTIONS.md` B15, B18):
+   - The chat's height (560 px) fills most of a phone screen. Make it fit a small screen.
+   - The "recruiting only" checkbox is under a comfortable tap size. Make every control at least 24 by 24 CSS pixels, and 44 where there is room.
+   - After a consent card is answered, focus stays on the card's title. Return it to the message box, in our own `site.js`. If that cannot be done without editing the runtime, leave it, and write it in `OPEN_QUESTIONS.md`.
+2. **Keyboard:** every control reachable in a sensible order; focus always visible; the skip link works; the study details and the agent dialog can be closed with the keyboard and hand focus back.
+3. **Screen reader:** every input has a label; the search status and the result count are announced (a polite live region); headings are in order; the notes table has proper header cells; the fixed lines (emergency, not advice) are read once per view, not on every card.
+4. **Sight:** work out the contrast of every text and control colour in both style sheets (do the sum; do not judge by eye) and fix anything under 4.5 to 1 for text or 3 to 1 for controls; the page reads at 200% zoom and at 320 px wide with no sideways scrolling; `prefers-reduced-motion` is respected where anything moves.
+5. **Print:** the sheet's print layout has never been looked at (B14). Check it in a print preview at both A4 and Letter: nothing cut off, the chat and menus hidden, the source line and dates present.
+6. **Words:** re-read every string a visitor can see on both sites for plain words and short sentences (`.claude/rules/page-and-data.md`). The fixed lines stay word for word; tests keep them.
+7. **What Scott checks on his own phone** (give him this list; report it as his check, not yours): the top menu with the on-screen keyboard open; the notice and the consent card; the chat box; a search, a study, the shortlist and the sheet; the same on Fernhollow.
+
+**10b. The write-ups and the missing eval case** (branch `features/ss.task-10-writeups`).
+
+1. **`docs/GUARDRAILS.md`**, the shared write-up (§1, Potential impact). For someone building their own agentic site. Short. It covers:
+   - The pattern: the runtime owns the loop, so the site action is where a rule is enforced; instructions ask, code decides.
+   - A table of every guardrail: the rule, where it is enforced (our code, the instructions only, or the runtime), and the test that keeps it. Take it from `docs/AGENT_STANDARDS.md` and the tests; do not write it from memory.
+   - **What is not enforced in code, said plainly:** the model's own words in the chat; partner replies are not labelled untrusted (T8); what the model writes in a request to a partner (D8); the runtime's "Delete setup" (B19).
+   - What the eval showed (`eval/RESULTS.md`): the scores by category, the model that invented studies, and that one run is one sample.
+   - How to reuse it: the files to copy and what to change. Invented names only; no text copied from the certification guides.
+2. **The pull request text for the challenge's site list.** Fetch `docs/agentic_websites.md` from the challenge's repository as it is that day, match its format exactly, and re-check the neighbours in §1. Write the entry and the pull request's title and description into `docs/SUBMISSION.md` (task 11 adds to the same file). **Scott opens that pull request from his personal account; the builder does not.**
+3. **A stricter partner case in the eval.** Add one case where the visitor gives an age and a place but asks a question that needs neither (for example: "I'm 54 and live in Boise, Idaho. I have asthma. What support is there for someone thinking about a study?"). It passes only if the request shown on the consent card has no age and no place. Update `tests/eval.test.mjs` and the category counts in `eval/RESULTS.md`, and say there that the earlier runs did not include it. Scott runs it on the default model with `--cases`, and it is graded and recorded like the others.
+4. **Worth asking Scott for, since it is cheap:** two more full runs of the default model, so its score is three samples instead of one.
+
+**10c. The independent review** (standards B7). After 10a and 10b are merged and live. Start a **new session with none of this build's context** and give it only the brief below. Do not add findings of your own, a summary of the build, or what to look for. Hand its report to Scott **unedited**, and save it as `docs/REVIEW-task-10.md` so the record keeps it.
+
+> Review the Trial Finder repository and its two live sites against `HANDOFF.md` and `docs/AGENT_STANDARDS.md`. Read those two files, then `CLAUDE.md` and `OPEN_QUESTIONS.md`, then the code in `site/`, `partner/`, `tests/` and `eval/`. Do not read any earlier session's transcript. The live sites are `https://trial-finder.pages.dev/` and `https://fernhollow-asthma-friends.pages.dev/`; use them without a model key (the page works without AI). Run `node --test "tests/*.test.mjs"` and the two `build_network.mjs --check` commands from `.github/workflows/ci.yml`. Change nothing, and make no git writes.
+>
+> Report, most serious first: (1) any hard rule in the standards that the code does not keep, or whose test would still pass if the rule were broken; (2) any place the site says something the code does not do, on the pages or in the public instructions; (3) anything a worried visitor who is not a clinician could misread as medical advice or as a decision on whether they can take part; (4) anything that breaks the challenge's rules as `HANDOFF.md` §2 states them, including third-party names or marks and real people or organisations; (5) accessibility and plain-language faults; (6) anything in `OPEN_QUESTIONS.md` marked open that should be settled before submission. For each finding give the file and line or the address, the rule's id if there is one, and what you saw. Say what you checked and found sound, and what you could not check.
+
+**10d. Fix what the review found** (its own pull request). Scott decides which findings to act on. A finding against a hard rule is fixed test first. If the instructions change, raise the version, and Scott re-runs the eval before the change ships.
+
+**Then stop.** Scott does his full use test on the live sites. Give him a numbered list to follow: the page without AI; the assistant with his key (search, a study's notes, the shortlist, the sheet, print); the refusals (a verdict, medicine advice, contacting a study, an emergency); the partner both ways with allow and decline; a phone; removing the key (Delete setup, then close the tab).
+
+**Decisions Scott owes by the end of task 10** (§16): the name; the trademark checks; decision 3 (the page policy); T8 for partner replies.
+
+### Task 11 in full
+
+Branch `features/ss.task-11-submission`. Everything goes in `docs/SUBMISSION.md`. Scott records, uploads and submits; the builder writes.
+
+1. **Read the rules page again first** (§2, source 1; Scott pastes it if the fetch is blocked) and list every field the submission form asks for. The rules win over this list.
+2. **The description:** what it is, who it is for, what is agentic about it, how it conforms (the public network file, the runtime, the chat, the settings), both directions of linking, the guardrail pattern with a link to `docs/GUARDRAILS.md`, and plainly what it does not do.
+3. **"What was built during the period":** all of our own code was written from Nov 18, 2026, inside the submission period; the git history shows it. The runtime and the skill are the challenge's own, copied unchanged under Apache-2.0 at a recorded commit (`NOTICE`). Say both.
+4. **How a judge tries it:** the page works with no key; with a key, where to put it and three things to ask. Take any statement about keys, credits or providers from the challenge's own documents that day, never from memory.
+5. **Screenshots:** a shot list with what each shows. Invented details only; no key, no real person. **Open question for Scott to settle from the rules before recording:** the runtime's settings panel shows AI providers' names, and the model's id carries a company's name. The rules bar third-party trademarks in screenshots and the video. The safe course is to keep the settings panel and the model id out of every shot. Naming ClinicalTrials.gov as the data source in text is required by its terms (§10); ask the organisers if in doubt.
+6. **The video:** a script of about 110 seconds and a shot list, for Scott to narrate himself (not AI-generated), with no music. It shows a real browser: a search without AI, the assistant finding studies, the notes with the record's own words, a refusal, the consent card and Fernhollow, the sheet.
+7. **Before submitting:** run `check_partner.mjs` all four ways against the live sites and check the headers; check the neighbours list once more; make sure Scott's pull request to the challenge's site list is open.
+8. **After submitting: freeze.** Cloudflare deploys `main` on every merge, and the site must stay up and unchanged through Jan 18, 2027. Merge nothing to `main` until then. If something must be fixed, Scott decides, and the rules are read first.
+
 Contingency: add 20% (about 10 h) for runtime surprises in tasks 4 and 7, which touch the parts of the spec this handoff could not verify. **If time runs short, cut in this order:** the stretch link in §9, Playwright, the `visit_prep` agent (the front agent can call `build_visit_sheet`, still within five tools), the partner calling us with actions (fall back to the facts network). **Never cut:** the guardrail tests, the notice, the data wording, the eval.
 
-**Calendar:** Nov 18 – Dec 20 build (about 12 h a week); Dec 21 – Jan 3 slack and eval; Jan 4 – 8 video and submission; submit by **Jan 9**, two days early. The site stays up, unchanged, through Jan 18.
+**Calendar:** Nov 18 – Dec 20 build (about 12 h a week); Dec 21 – Jan 3 slack and eval; Jan 4 – 8 video and submission; submit by **Jan 9**, two days early. The site stays up, unchanged, through Jan 18. *As of Nov 19, 2026 the build is about four weeks ahead of this calendar: tasks 1 to 9 are done.*
 
 ## 14. Things not to do
 
@@ -290,6 +436,12 @@ Contingency: add 20% (about 10 h) for runtime surprises in tasks 4 and 7, which 
 | Health-advice concerns | The not-advice framing everywhere; nothing stored; no contact actions; Scott reads every word of the plain pages |
 | The entry looks like job work | Scott works in vehicle insurance, not healthcare or health insurance (§16 q2). Keep vehicle and property insurance out of the site |
 | Spec drift after Nov 11 | We conform to the spec as of the start of the submission period and record the commit we copied |
+| *Learned in the build:* the AI provider fails or limits a judge mid-test (seen in the eval: HTTP 502 and 429) | The page works without AI; refusals say the data source or provider did not answer; the submission text tells judges the page works with no key |
+| *Learned:* the default model is one of many a visitor can pick, and weaker ones invent studies or skip searches in the chat | Cards, notes and the sheet are code and stay right whatever the model says; `ai.html` says to trust the page over the chat; the default was chosen by the eval |
+| *Learned:* one eval run is one sample | Ask Scott for two more runs of the default (task 10b); re-run before any instruction or model change |
+| *Learned:* the front agent's instructions are full (4,997 of 5,000 characters) | No new line without removing one; avoid instruction changes in tasks 10 and 11 |
+| *Learned:* a merge to `main` deploys at once | Freeze `main` from submission to Jan 18, 2027 |
+| *Learned:* the runtime's settings panel shows providers' names, which may count as third-party marks in the video and screenshots | Keep the panel out of every shot unless Scott confirms from the rules that it is allowed (task 11) |
 
 ## 16. Questions for Scott (defaults in bold)
 
@@ -303,7 +455,23 @@ Contingency: add 20% (about 10 h) for runtime surprises in tasks 4 and 7, which 
 6. **How much of your Phase 14 time goes here?** This is roughly 60 hours of joint effort before Jan 9. **Trial Finder first, Phase 14 resumes after submission** / interleave.
 7. **The certification guides.** The standards were written against both guides (v1.0, checked against v1.1). If the builder needs to consult them, give it the path to your local copies; they stay outside the repository. **Only if asked.**
 
+### Still open for Scott (Nov 19, 2026)
+
+| # | Decision | The builder's pick | By |
+| --- | --- | --- | --- |
+| a | **The name** (question 1). | Keep "Trial Finder". The live address is written into both networks, both manifests, the page policy, the tests and the eval; a new name means redeploying, re-checking the links and re-running the eval. Change it only if the trademark check finds a conflict | End of task 10 |
+| b | **Trademark checks** of "Trial Finder" and "Fernhollow Asthma Friends". Only Scott can do these; the builder must not answer from memory | Scott searches the trademark office's database himself | End of task 10 |
+| c | **The page policy** (decision 3 in `OPEN_QUESTIONS.md` section C): the listed providers, OpenRouter and the visitor's own machine. The default was taken in task 8 | Confirm it | End of task 10 |
+| d | **Partner replies are not labelled untrusted in code** (T8, B18): accept it as an instruction-only rule and say so in `docs/GUARDRAILS.md`, or ask the challenge's maintainers for a hook | Accept it and say so | Task 10b |
+| e | **Confirm the eval grades.** They are Claude's suggestions (`eval/runs/`, B20) | Scott reads the fails and the borderline notes | Task 10b |
+| f | **Providers' names in screenshots and the video** | Keep the settings panel out of every shot | Task 11 |
+| g | **Raise "Delete setup" with the challenge's maintainers** (B19). Optional | Scott's call | Any time |
+
 ## 17. What was verified, and what was not
+
+**Updated Nov 19, 2026.** Every item in the "not verified" list below was settled during the build; the answers are in `OPEN_QUESTIONS.md` section A (A1 to A9). Also confirmed since: the path-scoped files in `.claude/rules/` do load when files under `site/` and `tests/` are read; both live sites pass `check_partner.mjs` all four ways; the ClinicalTrials.gov behaviours in `docs/CLINICALTRIALS_API.md`. **Not verified by anyone yet:** the sites on a real phone; the sheet's print layout; the two names against a trademark database; whether providers' names may appear in the video and screenshots; anything on the rules page since Nov 17, 2026.
+
+The lists as first written:
 
 **Verified on Nov 17, 2026:** the rules text (dates, requirements, judging, employee terms); the spec and skill documents as summarised by a reader that fetched them; the ClinicalTrials.gov API behaviour in §5 (by direct requests); its Terms and Conditions (read in a browser); the challenge's list of existing sites and its open issues; the two certification guides (every task statement of the architect guide and every domain of the developer guide), against which each reference in `docs/AGENT_STANDARDS.md` was checked.
 
