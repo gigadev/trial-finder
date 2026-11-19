@@ -8,8 +8,8 @@
 // assistant reads exactly what the page shows (the skill's site_actions.md, "Expose
 // page-only facts"). Nothing is stored and nothing is logged.
 
-/** Where Trial Finder lives. Task 8 replaces this with its hosted address. */
-export const TRIAL_FINDER_URL = "http://localhost:8080/";
+/** Where Trial Finder lives. */
+export const TRIAL_FINDER_URL = "https://trial-finder.pages.dev/";
 
 export const TOPICS = Object.freeze([
   {

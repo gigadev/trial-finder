@@ -25,9 +25,9 @@ jobs:
         run: node vendor/agentify-website/scripts/build_network.mjs site/trial_finder.hocon --manifest site/agent-manifest.json --check
       - name: Conformance check (partner site)
         run: node vendor/agentify-website/scripts/build_network.mjs partner/support_desk.hocon --manifest partner/agent-manifest.json --check
-      # Both sites on the two host names their networks name, then the challenge's partner
-      # checker both ways, and once each as any caller. The addresses are the local ones
-      # until task 8 hosts the sites.
+      # Both sites served locally, then the challenge's partner checker both ways and once
+      # each as any caller. This checks the files themselves; the hosted sites
+      # (trial-finder.pages.dev, fernhollow-asthma-friends.pages.dev) are checked by hand.
       - name: Serve both sites
         run: |
           node vendor/agentify-website/scripts/serve_site.mjs site --port 8080 --open-as localhost &

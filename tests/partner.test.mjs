@@ -24,7 +24,7 @@ const HTML = await readFile(path.join(PARTNER, "index.html"), "utf8");
 const CONFIG = JSON.parse(await readFile(path.join(PARTNER, "support_desk.network.json"), "utf8"));
 const MANIFEST = JSON.parse(await readFile(path.join(PARTNER, "agent-manifest.json"), "utf8"));
 const TEMPLATE = await readFile(path.join(HERE, "../vendor/agentify-website/templates/network.hocon"), "utf8");
-const TRIAL_FINDER_NETWORK = "http://localhost:8080/trial_finder";
+const TRIAL_FINDER_NETWORK = "https://trial-finder.pages.dev/trial_finder";
 
 const document = StubDocument.fromHtml(HTML, `${BASE}/`);
 App.start(document);
@@ -81,7 +81,7 @@ test("Fernhollow keeps the skill's partner and peer rules word for word", () => 
 test("Fernhollow's instructions: no medical advice, emergencies, and only the condition and question to Trial Finder", () => {
   const instructions = new AgentNetwork(CONFIG, "support_desk").getAgentSpec("support_desk").instructions;
   for (const line of [
-    "a demonstration site at http://127.0.0.1:8091/",
+    "a demonstration site at https://fernhollow-asthma-friends.pages.dev/",
     "You give no medical advice.",
     "Never judge symptoms, suggest a medicine or say whether someone can join a study.",
     "tell them to call their local emergency number now",
@@ -157,7 +157,7 @@ test("run by another site, Fernhollow's network gets none of its page's tools", 
   const table = await buildToolTable(ctx, ctx.network.getAgentSpec("support_desk"), [], null);
   assert.equal([...table.toolByName.keys()].some((name) => name.startsWith("website_")), false);
   // Its first sentence is what a caller learns, so it names the site's topics and address.
-  assert.match(ctx.network.getAgentSpec("support_desk").instructions.trim(), /^You are the assistant on the Fernhollow Asthma Friends website, a demonstration site at http:\/\/127.0.0.1:8091\/\. It offers plain-language pages on/);
+  assert.match(ctx.network.getAgentSpec("support_desk").instructions.trim(), /^You are the assistant on the Fernhollow Asthma Friends website, a demonstration site at https:\/\/fernhollow-asthma-friends\.pages\.dev\/\. It offers plain-language pages on/);
 });
 
 test("Fernhollow is offered at most 5 site tools and 7 tools in all", async () => {

@@ -1,0 +1,42 @@
+# Response headers for Trial Finder on Cloudflare Pages (HANDOFF.md §11; the skill's
+# references/bundle_and_hosting.md, "Static hosting"). Cloudflare joins the values of
+# every rule that matches a path, in this order, so a later rule that needs a different
+# value first removes the header with "! Name" (developers.cloudflare.com/pages/
+# configuration/headers/). tests/headers.test.mjs keeps these rules.
+#
+# The Content-Security-Policy allows only: this site; ClinicalTrials.gov; the AI providers
+# the settings panel offers, plus OpenRouter, which the challenge's provider notes list;
+# the visitor's own computer, for a local model (OPEN_QUESTIONS.md, decision 3); and the
+# one partner site. Styles may be inline because the runtime injects its own.
+
+/*
+  ! Access-Control-Allow-Origin
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://clinicaltrials.gov https://api.otari.ai https://eu.api.otari.ai https://generativelanguage.googleapis.com https://api.groq.com https://api.openai.com https://api.anthropic.com https://openrouter.ai http://localhost:* http://127.0.0.1:* https://fernhollow-asthma-friends.pages.dev; frame-src https://fernhollow-asthma-friends.pages.dev; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+  X-Frame-Options: DENY
+  Referrer-Policy: no-referrer
+  X-Content-Type-Options: nosniff
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
+
+# The public agent files: any site, and any site's assistant, may read them.
+/agent-manifest.json
+  Access-Control-Allow-Origin: *
+/trial_finder.network.json
+  Access-Control-Allow-Origin: *
+/links.json
+  Access-Control-Allow-Origin: *
+/agent-mcp.json
+  Access-Control-Allow-Origin: *
+/.well-known/*
+  Access-Control-Allow-Origin: *
+
+# The runtime's code sandbox, with the policy the runtime itself checks for.
+/runtime/sandbox-worker.js
+  ! Content-Security-Policy
+  Content-Security-Policy: default-src 'none'; script-src blob:; connect-src 'none'; worker-src 'none'
+
+# The bridge page other sites load in a hidden frame before they run this network. It
+# must be frameable by any site; everything else on this site is not.
+/bridge/*
+  ! X-Frame-Options
+  ! Content-Security-Policy
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors *

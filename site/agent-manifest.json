@@ -25,7 +25,7 @@
     "byok_router": "https://api.otari.ai/api/v1"
   },
   "allowed_peers": [
-    "http://127.0.0.1:8091"
+    "https://fernhollow-asthma-friends.pages.dev"
   ],
   "peer_policy": {
     "mode": "closed",
