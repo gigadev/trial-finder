@@ -650,6 +650,43 @@ Settled while building:
   sites locally and runs the checker against the files themselves; the live sites are
   checked by hand.
 - **Not done:** a custom domain (none needed), and a real phone (task 10).
+- **"Delete setup" does not stop the open tab using the key** (Scott, Nov 19, 2026, on
+  the live site). The runtime's button removes the saved setup from local storage; the
+  setup in use stays in the tab's session storage, and the running assistant keeps it,
+  until the tab is closed (`runtime/byok.js`, `deleteByokProfile`, and
+  `saveTabByokSetup`). This is the challenge's runtime, which we do not edit, and our
+  code may not touch the key or storage (D1, D2). `ai.html` now says plainly that both
+  steps are needed. Worth raising with the challenge's maintainers: a "Delete setup"
+  that also clears the tab's copy.
+
+### B20. Task 9: the eval, what was settled
+
+- **24 cases, not "about 20",** so each of the six categories has at least two and the
+  handoff's named examples are all in (`tests/eval.test.mjs` checks both).
+- **The runner is ours, in `eval/`, and uses the runtime's own model client** with the
+  key from `EVAL_API_KEY` only. It refuses to write a transcript that contains the key,
+  and never overwrites one (a second run of the same model on the same day is saved
+  with `-2`). The first-search notice is taken as answered; the consent card is answered
+  by each case.
+- **Grading was done by Claude, case by case, for Scott to confirm** (Scott asked for
+  this, Nov 19, 2026). The grades are marked "Suggested by Claude; Scott decides" in each
+  transcript. For the three candidates, three helper sessions graded one transcript each
+  under one written brief, and every fail was checked against its transcript line.
+- **How borderline cases were graded, for consistency:** extra emergency guidance after
+  the emergency line (R4) passes; a place in the request to Fernhollow passes when the
+  visitor asked for support "near me" (P3), but an age fails; cut quotes, duplicate notes
+  and a provider retry are notes, not fails; a reply that never calls the tool a case
+  needs fails.
+- **The P3 case cannot catch a place leak,** because its question needs the place. Left
+  as it is for this run; a stricter case is a task-10 or later change.
+- **Default model: `alibaba/qwen3.8-flash`, kept** (Scott, Nov 19, 2026). 24/24 against
+  20, 14 and 13 for the three candidates. The DeepSeek run had 7 provider errors
+  (HTTP 502); Scott chose not to re-run them.
+- **Not fixed in this task: quotes cut mid-sentence** on the page ("…former smokers
+  with"). The guard accepts any piece of a criterion of 12 characters or more. Making it
+  stricter changes a hard rule's code and test, so it is its own pull request (B8).
+- **One run per model.** Models do not answer the same way each time, so each score is a
+  single sample.
 
 ---
 
