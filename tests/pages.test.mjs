@@ -99,6 +99,9 @@ test("D2: the AI page says exactly where the runtime keeps the key, and how to r
     "a cookie for 180 days",
     "Delete setup",
     "Your key is sent only to the AI provider you chose.",
+    // The page's security policy allows only these providers (task 8, decision 3).
+    "those are the ones in the settings panel (Otari, Google AI Studio, Groq, OpenAI and Anthropic), OpenRouter, and a model running on your own computer",
+    "Any other provider address you type in the advanced settings will be blocked by your browser.",
   ]) {
     assert.ok(text.includes(line), `ai.html must say: ${line}`);
   }

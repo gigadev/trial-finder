@@ -25,7 +25,7 @@
     "byok_router": "https://api.otari.ai/api/v1"
   },
   "allowed_peers": [
-    "http://localhost:8080"
+    "https://trial-finder.pages.dev"
   ],
   "peer_policy": {
     "mode": "closed",

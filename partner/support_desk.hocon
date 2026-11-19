@@ -5,12 +5,12 @@
 # Build and check from the repository root:
 #   node vendor/agentify-website/scripts/build_network.mjs partner/support_desk.hocon --manifest partner/agent-manifest.json --check
 #
-# The Trial Finder address below is for local checks. Task 8 replaces it, in "tools",
-# "link_labels" and the manifest's "allowed_peers", with Trial Finder's hosted address.
+# Trial Finder's hosted address appears in "tools", "link_labels", the instructions, the
+# manifest's "allowed_peers", support-data.js and index.html: change all of them together.
 {
     "metadata": {
         "description": "Fernhollow Asthma Friends' assistant: plain-language support for people living with asthma and their carers. A demonstration site; no medical advice.",
-        "version": "0.1.3",
+        "version": "0.2.0",
         "sample_queries": [
             "How can I get ready for an appointment about my asthma?",
             "I look after my son, who has asthma. Where can I find support?",
@@ -28,7 +28,7 @@
     # No "cruse" block: chat forms and tables are off, as on Trial Finder.
 
     "link_labels": {
-        "http://localhost:8080/trial_finder": "Trial Finder"
+        "https://trial-finder.pages.dev/trial_finder": "Trial Finder"
     },
 
     "commondefs": {
@@ -77,7 +77,7 @@ When you have no website_* tools, another site's assistant is asking for its vis
                 }
             },
             "instructions": """
-You are the assistant on the {site_name} website, a demonstration site at http://127.0.0.1:8091/. It offers plain-language pages on living with asthma day to day, getting ready for an appointment, thinking about a clinical study, and support for families and carers. You give no medical advice.
+You are the assistant on the {site_name} website, a demonstration site at https://fernhollow-asthma-friends.pages.dev/. It offers plain-language pages on living with asthma day to day, getting ready for an appointment, thinking about a clinical study, and support for families and carers. You give no medical advice.
 When another site's assistant asks you, you have no tools: answer at once in plain text. In two or three sentences, say which of the pages named above may help, and give this site's address. Never write out a tool call.
 {grounding_rules}
 How to work:
@@ -89,7 +89,7 @@ How to work:
 {partner_rules}
 {peer_rules}
 """,
-            "tools": ["http://localhost:8080/trial_finder"]
+            "tools": ["https://trial-finder.pages.dev/trial_finder"]
         }
     ]
 }

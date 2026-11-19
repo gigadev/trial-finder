@@ -261,7 +261,7 @@ test("W3, T2: every action declares a read or write effect, none is irreversible
     }
   }
   // The one partner site, and only an origin some agent really calls (task 7).
-  assert.deepEqual(MANIFEST.allowed_peers, ["http://127.0.0.1:8091"]);
+  assert.deepEqual(MANIFEST.allowed_peers, ["https://fernhollow-asthma-friends.pages.dev"]);
   assert.equal(MANIFEST.peer_policy.mode, "closed");
 });
 
@@ -767,7 +767,7 @@ test("the sheet through the runtime: refused while the shortlist is empty; only 
 // The partner site, both ways (task 7)
 // ---------------------------------------------------------------------------------
 
-const PARTNER_URL = "http://127.0.0.1:8091/support_desk";
+const PARTNER_URL = "https://fernhollow-asthma-friends.pages.dev/support_desk";
 const PARTNER_REQUEST = "Asthma: where can I find support while I think about a study?";
 
 test("the partner is declared once, labelled for the consent card, and is the only allowed peer", () => {
@@ -818,7 +818,7 @@ async function partnerRun(decision) {
   ctx.requestConsent = async (info) => { cards.push(info); return decision; };
   ctx.resolveRemote = async (url) => {
     resolved.push(url);
-    return { invoke: async (request) => { invoked.push(request); return { text: "Fernhollow offers support pages at http://127.0.0.1:8091/." }; } };
+    return { invoke: async (request) => { invoked.push(request); return { text: "Fernhollow offers support pages at https://fernhollow-asthma-friends.pages.dev/." }; } };
   };
   try {
     await runAgent(ctx, ctx.frontMan, "Where can I find support?", null, []);
@@ -832,12 +832,12 @@ test("W1: when the visitor declines the card, nothing is fetched from the partne
   const { model, cards, resolved, invoked, fetched } = await partnerRun("decline");
   assert.equal(cards.length, 1);
   assert.deepEqual({ kind: cards[0].kind, label: cards[0].peerLabel, origin: cards[0].peerOrigin, text: cards[0].requestText },
-    { kind: "network", label: "Fernhollow Asthma Friends", origin: "127.0.0.1:8091", text: PARTNER_REQUEST });
+    { kind: "network", label: "Fernhollow Asthma Friends", origin: "fernhollow-asthma-friends.pages.dev", text: PARTNER_REQUEST });
   assert.deepEqual(resolved, [], "the partner's files are not even fetched");
   assert.deepEqual(invoked, []);
   assert.deepEqual(fetched, []);
   const toolMessage = model.calls[1].messages.filter((message) => message.role === "tool").at(-1).content;
-  assert.match(toolMessage, /^The user declined to contact 127.0.0.1:8091\./);
+  assert.match(toolMessage, /^The user declined to contact fernhollow-asthma-friends\.pages\.dev\./);
 });
 
 test("D8: when the visitor allows it, the partner gets the request text and nothing else", async () => {
@@ -859,7 +859,7 @@ test("run by another site, Trial Finder's network gets none of this page's tools
     assert.equal([...table.toolByName.keys()].some((name) => name.startsWith("website_")), false, `${agent.name} is offered site tools`);
   }
   // Its first sentence is about all a caller learns, so it names what the site offers.
-  assert.match(net.getAgentSpec("trial_guide").instructions.trim(), /^You are the assistant on the Trial Finder website, at http:\/\/localhost:8080\/\. You help patients and caregivers find clinical studies/);
+  assert.match(net.getAgentSpec("trial_guide").instructions.trim(), /^You are the assistant on the Trial Finder website, at https:\/\/trial-finder\.pages\.dev\/\. You help patients and caregivers find clinical studies/);
   // Asked by another site, it has no search; it says so plainly and gives its address
   // (Scott's live test, Nov 18, 2026: it reported the missing tool as a fault).
   assert.ok(net.getAgentSpec("trial_guide").instructions.includes("If another site's assistant asks you, you cannot search from there. That is expected, not a fault: say Trial Finder searches public study records on its own site, and give its address."));
@@ -888,7 +888,7 @@ test("the consent card gets focus while it waits, and focus then returns to the 
     document.provide("#ns-msgs .ns-consent", [older.box, newest.box]);
     return new Promise((resolve) => { answerCard = resolve; });
   };
-  const answer = AssistantMount.consent({ kind: "network", peerLabel: "Fernhollow Asthma Friends", peerOrigin: "127.0.0.1:8091", requestText: PARTNER_REQUEST });
+  const answer = AssistantMount.consent({ kind: "network", peerLabel: "Fernhollow Asthma Friends", peerOrigin: "fernhollow-asthma-friends.pages.dev", requestText: PARTNER_REQUEST });
   assert.equal(newest.box.getAttribute("role"), "group");
   assert.equal(newest.box.getAttribute("aria-label"), newest.title.textContent);
   assert.equal(newest.title.tabIndex, -1);

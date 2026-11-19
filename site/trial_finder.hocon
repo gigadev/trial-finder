@@ -14,7 +14,7 @@
         # Shown in the page footer; tests/agent.test.mjs keeps the two the same.
         # Change it whenever any instruction or the manifest's actions change, and record
         # it with every eval run (C4, D11).
-        "version": "0.7.1",
+        "version": "0.8.0",
         "sample_queries": [
             "Are there studies recruiting for type 2 diabetes near Boise, Idaho?",
             "I am 54 and have asthma. Which studies near Portland, Oregon are taking new people?",
@@ -35,11 +35,10 @@
     # offered one more tool, and the model could draw a table in the chat that looks like
     # one of the page's cards (OPEN_QUESTIONS.md A5, decision 2 of the task 4 plan).
 
-    # The consent card's name for each partner network. The address is for local checks;
-    # task 8 replaces it here, in the front agent's "tools" and in the manifest's
-    # "allowed_peers" with Fernhollow's hosted address.
+    # The consent card's name for each partner network, keyed by its hosted address, which
+    # also appears in the front agent's "tools" and the manifest's "allowed_peers".
     "link_labels": {
-        "http://127.0.0.1:8091/support_desk": "Fernhollow Asthma Friends"
+        "https://fernhollow-asthma-friends.pages.dev/support_desk": "Fernhollow Asthma Friends"
     },
 
     "commondefs": {
@@ -103,7 +102,7 @@ When you have no website_* tools, another site's assistant is asking for its vis
                 }
             },
             "instructions": """
-You are the assistant on the {site_name} website, at http://localhost:8080/. You help patients and caregivers find clinical studies in the public ClinicalTrials.gov records, understand them in plain words, and prepare questions for their doctor.
+You are the assistant on the {site_name} website, at https://trial-finder.pages.dev/. You help patients and caregivers find clinical studies in the public ClinicalTrials.gov records, understand them in plain words, and prepare questions for their doctor.
 {grounding_rules}
 {health_rules}
 How to work:
@@ -118,12 +117,12 @@ How to work:
 - Call website_shortlist only when the visitor asks to add or remove a study; change "list" reads it.
 - Call website_build_visit_sheet only when the visitor asks for a sheet for their doctor, with any questions they want; it uses the shortlist.
 - For support with daily life or while deciding, call support_desk (Fernhollow Asthma Friends) with the condition and question only; never age, sex or place unless asked.
-- Keep answers short; point to the page rather than repeating it.
+- Keep answers short; point to the page, not repeating it.
 - If another site's assistant asks you, you cannot search from there. That is expected, not a fault: say Trial Finder searches public study records on its own site, and give its address.
 {partner_rules}
 {peer_rules}
 """,
-            "tools": ["study_explainer", "http://127.0.0.1:8091/support_desk"]
+            "tools": ["study_explainer", "https://fernhollow-asthma-friends.pages.dev/support_desk"]
         },
         {
             "name": "study_explainer",

@@ -25,12 +25,11 @@ const NOT_OURS = new Set(["runtime", "bridge", ".well-known"]);
 /**
  * Both sites, each with its own allow-lists. links: the only outside origins its pages
  * may link to; nothing may be loaded from any. scripts: the only outside origins its
- * scripts may name. Fernhollow's only outside origin is Trial Finder, at its local
- * address until task 8 hosts it.
+ * scripts may name. Fernhollow's only outside origin is Trial Finder.
  */
 const SITES = [
   { dir: "site", links: new Set(["https://clinicaltrials.gov"]), scripts: new Set(["https://clinicaltrials.gov"]) },
-  { dir: "partner", links: new Set(["http://localhost:8080"]), scripts: new Set(["http://localhost:8080"]) },
+  { dir: "partner", links: new Set(["https://trial-finder.pages.dev"]), scripts: new Set(["https://trial-finder.pages.dev"]) },
 ];
 
 async function ourFiles(extension) {
