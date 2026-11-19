@@ -685,6 +685,27 @@ Settled while building:
 - **Not fixed in this task: quotes cut mid-sentence** on the page ("…former smokers
   with"). The guard accepts any piece of a criterion of 12 characters or more. Making it
   stricter changes a hard rule's code and test, so it is its own pull request (B8).
+  Fixed in the next pull request: see B21.
+
+### B21. The guard fix: a note shows the record's whole criterion
+
+- **The guard still accepts a piece of a criterion** (12 characters or more, found in the
+  record), but the page now shows the whole criterion the piece is in, in the record's
+  own words, never the model's quote. Chosen over refusing pieces: refusing would drop
+  more notes and make the model try again, which costs the visitor calls; showing the
+  record's own words is what C10 asks for anyway.
+- **"Whole criterion" means the record's line**, with its bullet or number and markdown
+  escapes removed. A line ending in a colon brings the indented points under it (the
+  asthma study's flare-up and blood-test rule). A quote across two lines shows both,
+  parted by "; ". A criterion over 600 characters is cut to the whole sentences the
+  quote is in.
+- **Two pieces of one criterion are one note** now: the second is dropped as a
+  duplicate.
+- **What the model is told back is unchanged** (how many were shown, what was dropped and
+  why). The instructions are unchanged, so no version changed.
+- **The test that kept the model's quote as given was changed** (`tests/guard.test.mjs`,
+  `tests/app.test.mjs`), because that behaviour is what put cut words on the page. This
+  makes the rule stricter about what is shown, not looser about what is accepted (B8).
 - **One run per model.** Models do not answer the same way each time, so each score is a
   single sample.
 

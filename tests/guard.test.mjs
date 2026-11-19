@@ -207,7 +207,88 @@ test("C9: when the record does not say, cannot_tell is accepted as it is", () =>
   assert.equal(result.kept[0].status, "cannot_tell");
 });
 
-test("text is trimmed and its spacing tidied, but a kept criterion is the model's quote, not rewritten", () => {
+// ---------------------------------------------------------------------------------
+// C8, C10: the page shows the record's whole criterion, never a piece cut mid-sentence
+// (eval findings, Nov 19, 2026: "Current smokers, former smokers with" on the page)
+// ---------------------------------------------------------------------------------
+
+/** What the page would show for one quote, or the drop reason. */
+function shown(quote, record = RECORD) {
+  const result = checkNotes({ notes: [note(quote)] }, record);
+  return result.ok ? result.kept[0].criterion : "refused";
+}
+
+test("C10: a piece of a criterion is shown as the whole criterion, in the record's own words", () => {
+  for (const [quote, whole] of [
+    ["former smoker with more than 10 pack-years", "Current smoker or former smoker with more than 10 pack-years"],
+    ["Current smoker or former", "Current smoker or former smoker with more than 10 pack-years"],
+    ["could interfere with the study", "Any other lung disease that, in the investigator's opinion, could interfere with the study"],
+    // Numbering and bullets go; the record's dashes, quotes and signs stay; escapes go.
+    ["adults aged 18-75, inclusive", "Adults aged 18–75, inclusive when signing the informed consent."],
+    ["Body mass index >= 18", "Body mass index >= 18 and <= 40 kg/m²"],
+    ["keep a \"daily symptom diary\"", "Willing to keep a “daily symptom diary”"],
+    ["Pregnant or breastfeeding", "Pregnant or breastfeeding"],
+  ]) {
+    assert.equal(shown(quote), whole, `quote: ${quote}`);
+  }
+});
+
+// Invented, in the shape of a real record: an item ending in a colon, with indented
+// sub-items and a blank line between them.
+const NESTED = `Inclusion Criteria:
+
+1. Adults aged 18-75.
+2. A history of flare-ups in the last 12 months and test results of:
+
+   1. two or more severe flare-ups OR
+   2. one severe flare-up and:
+
+   (i) a blood count of 150 cells or more
+3. Willing to keep a daily diary.`;
+
+test("C10: a criterion that ends in a colon is shown with the points under it", () => {
+  const whole = "A history of flare-ups in the last 12 months and test results of: 1. two or more severe flare-ups OR 2. one severe flare-up and: (i) a blood count of 150 cells or more";
+  assert.equal(shown("A history of flare-ups in the last 12 months and test results of:", NESTED), whole);
+  assert.equal(shown("flare-ups in the last 12 months", NESTED), whole);
+  assert.equal(shown("Willing to keep a daily diary", NESTED), "Willing to keep a daily diary.");
+});
+
+test("C10: a quote across two criteria shows both, whole, parted by a semicolon", () => {
+  assert.equal(shown("Pregnant or breastfeeding Any other lung disease"),
+    "Pregnant or breastfeeding; Any other lung disease that, in the investigator's opinion, could interfere with the study");
+});
+
+test("C10: a very long criterion is shown as the whole sentences the quote is in", () => {
+  const sentence = "Participants must be able to visit the clinic every two weeks for the whole study.";
+  const long = `Exclusion Criteria:\n\n- ${"Any condition that could put the participant at extra risk in this study. ".repeat(8)}${sentence} ${"Any other reason the investigator gives. ".repeat(4)}`;
+  assert.ok(long.length > 700);
+  assert.equal(shown("visit the clinic every two weeks", long), sentence);
+});
+
+test("C8: two pieces of the same criterion are one note", () => {
+  const result = checkNotes({
+    notes: [
+      note("Current smoker or former smoker", "cannot_tell"),
+      note("former smoker with more than 10 pack-years", "cannot_tell"),
+    ],
+  }, RECORD);
+  assert.deepEqual(result.kept.map((item) => item.criterion), ["Current smoker or former smoker with more than 10 pack-years"]);
+  assert.deepEqual(result.dropped.map((item) => item.reason), ["duplicate"]);
+});
+
+test("C8: the real study record: pieces are shown whole, and nothing cut mid-sentence reaches the page", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const fixture = JSON.parse(await readFile(new URL("./fixtures/ctgov/study-found.json", import.meta.url), "utf8"));
+  const criteria = JSON.parse(fixture.body).protocolSection.eligibilityModule.eligibilityCriteria;
+  // The quotes models sent in the eval run of Nov 19, 2026.
+  assert.equal(shown("Current smokers, former smokers with", criteria), "Current smokers, former smokers with >10 pack-years history.");
+  assert.equal(shown("Current smokers", criteria), "Current smokers, former smokers with >10 pack-years history.");
+  assert.equal(shown("Documented exacerbation history in the last 12 months and biomarker requirements of:", criteria),
+    "Documented exacerbation history in the last 12 months and biomarker requirements of: 1. ≥ 2 severe exacerbations OR 2. 1 severe exacerbation and: (i) Eosinophils ≥ 150 cells/µl or (ii) FeNo ≥ 25 ppb");
+  assert.equal(shown("Pre-bronchodilator FEV1 ≥ 40% to ≤ 90% of predicted normal", criteria), "Pre-bronchodilator FEV1 ≥ 40% to ≤ 90% of predicted normal.");
+});
+
+test("text is trimmed and its spacing tidied, and a kept criterion is the record's own words", () => {
   const result = checkNotes({
     facts: ["  Age   54 "],
     notes: [note("  Pregnant or breastfeeding ", "cannot_tell", "  Not   said. ")],
