@@ -57,7 +57,7 @@ test("SUBMISSION.md: the site-list row has the list's five columns and points at
   assert.match(cells[4], /^ \[Link\]\(https:\/\/trial-finder\.pages\.dev\/trial_finder\.network\.json\) $/);
   await access(path.join(ROOT, "site/trial_finder.network.json"));
   // The description makes the two promises the site keeps in code.
-  assert.ok(cells[2].includes("Never says whether you can take part, and contacts no one."));
+  assert.ok(cells[2].includes("Built not to decide whether you can take part, and contacts no one."));
   assert.ok(submission.includes("Scott opens it **from his personal GitHub account**"));
 });
 

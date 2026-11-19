@@ -30,7 +30,7 @@ A new session starts here. Sections 1 to 12 were written before the build; they 
 
 **The numbers a change must respect:**
 
-- 219 tests (after 10b). Run them with `node --test "tests/*.test.mjs"` (or `npm test`). **A bare `node --test` also picks up a template test inside `vendor/` and fails; that is not our failure.**
+- 221 tests (after 10d). Run them with `node --test "tests/*.test.mjs"` (or `npm test`). **A bare `node --test` also picks up a template test inside `vendor/` and fails; that is not our failure.**
 - Instructions: Trial Finder version 0.8.0, **4,997 of 5,000 characters used on the front agent**. There is room for three more characters. Any new line means removing one. Fernhollow is version 0.2.0, 3,432 characters.
 - A change to a `.hocon` file means: rebuild with `build_network.mjs`, raise the version, update the version in `site/index.html`'s footer, and **run the eval again before it ships** (standards C11, D11). Scott runs the eval; it needs his key. So change the instructions only when a finding needs it, and batch such changes.
 - Runtime limits: 24 agent calls and 90 seconds per visitor message, 4 partner calls, 1 per partner.
@@ -466,6 +466,8 @@ Contingency: add 20% (about 10 h) for runtime surprises in tasks 4 and 7, which 
 | e | **Confirm the eval grades.** They are Claude's suggestions (`eval/runs/`, B20) | Scott reads the fails and the borderline notes | Task 10b |
 | f | **Providers' names in screenshots and the video** | Keep the settings panel out of every shot | Task 11 |
 | g | **Raise "Delete setup" with the challenge's maintainers** (B19). Optional | Scott's call | Any time |
+| h | **`get_trial` and W5** (`OPEN_QUESTIONS.md` B24, review finding 1.3): `get_trial` fetches any well-formed id, which W5's wording does not allow | Keep the behaviour; reword W5 in its own pull request | Before submission |
+| i | **Sponsor and drug names in screenshots and the video** (review finding 4.1): real records name real companies and drugs | Pick shots where the record's names are out of frame, or blur them | Task 11 |
 
 ## 17. What was verified, and what was not
 

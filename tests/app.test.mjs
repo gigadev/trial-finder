@@ -589,6 +589,24 @@ test("closing a study's details hands focus to a heading the visitor can see", a
   assert.equal(searched.node("results-heading").focused, true, "with results: back to them");
 });
 
+// Task 10d (docs/REVIEW-task-10.md, finding 5.1): a study with no notes showed the word
+// "null" in its details, because the empty notes part was put on the page as is.
+test("a study's details with no notes or contacts put nothing empty on the page", async () => {
+  const { page, node } = await readyPage();
+  await page.openStudy(STUDY_ID);
+  const parts = node("study-body").children;
+  assert.ok(parts.length > 3);
+  assert.equal(parts.some((part) => part === null || part === undefined), false, "no empty part, which a browser prints as \"null\"");
+  assert.equal(parts.some((part) => part?.className === "notes"), false);
+  await page.buildSheet({ questions: [] }).catch(() => {});
+  page.updateShortlist(STUDY_ID, "add");
+  await page.buildSheet({ questions: [] });
+  for (const card of node("sheet-body").children) {
+    assert.notEqual(card, null);
+    for (const part of card.children ?? []) assert.notEqual(part, null);
+  }
+});
+
 test("methods do not move focus; only the page's own button handlers do", async () => {
   const { page, document } = await readyPage();
   await page.searchStudies(ASTHMA);

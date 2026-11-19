@@ -90,7 +90,9 @@ const STATUS_WORDS = Object.freeze({
 });
 
 const PHASE_WORDS = Object.freeze({
-  NA: "No phase (not a drug study)",
+  // The record says only "not applicable". It does not say why, so neither does the page
+  // (docs/REVIEW-task-10.md, finding 3.5).
+  NA: "No phase given (not applicable)",
   EARLY_PHASE1: "Early phase 1",
   PHASE1: "Phase 1",
   PHASE2: "Phase 2",
@@ -739,7 +741,8 @@ export class TrialFinderPage {
     } else if (status === "failed") {
       this.nodes["study-body"].replaceChildren(this.make("p", message, "error"));
     } else {
-      this.nodes["study-body"].replaceChildren(
+      // A part with nothing to show is null. Left in, a browser prints it as "null".
+      this.nodes["study-body"].replaceChildren(...[
         this.make("h3", record.title || "Title not stated"),
         this.make("p", record.id, "study-id"),
         this.factList(record),
@@ -750,7 +753,7 @@ export class TrialFinderPage {
         this.contactBlock(record),
         this.box("div", "button-row", this.shortlistButton(record)),
         this.sourceLine(record),
-      );
+      ].filter(Boolean));
     }
   }
 
