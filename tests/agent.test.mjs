@@ -900,6 +900,121 @@ test("the consent card gets focus while it waits, and focus then returns to the 
   assert.equal(messageBox.focused, true, "focus goes back to the message box");
 });
 
+// Task 10a. A tap, or a click in a browser that does not focus buttons, answers the card
+// while focus is still on its title (B18: "focus stays on the card's title").
+test("focus returns to the message box when the card was answered with focus still on its title", async () => {
+  const { StubElement } = await import("../vendor/agentify-website/templates/tests/stub_element.mjs");
+  const box = new StubElement("div");
+  const title = new StubElement("div");
+  title.textContent = "Contact Fernhollow Asthma Friends on your behalf?";
+  box.provide(".ns-consent-title", [title]);
+  box.contains = (node) => node === box || node === title;
+  const messageBox = new StubElement("textarea");
+  document.provide("#assistant-message", [messageBox]);
+  document.activeElement = null;
+  let answerCard;
+  AssistantMount.defaultConsent = () => {
+    document.provide("#ns-msgs .ns-consent", [box]);
+    return new Promise((resolve) => { answerCard = resolve; });
+  };
+  const answer = AssistantMount.consent({ kind: "network" });
+  assert.equal(title.focused, true);
+  document.activeElement = title;
+  answerCard("allow");
+  assert.equal(await answer, "allow");
+  assert.equal(messageBox.focused, true, "focus leaves the answered card for the message box");
+  document.activeElement = null;
+});
+
+test("focus elsewhere on the page is left alone when the card is answered", async () => {
+  const { StubElement } = await import("../vendor/agentify-website/templates/tests/stub_element.mjs");
+  const box = new StubElement("div");
+  const title = new StubElement("div");
+  box.provide(".ns-consent-title", [title]);
+  box.contains = (node) => node === box || node === title;
+  const messageBox = new StubElement("textarea");
+  document.provide("#assistant-message", [messageBox]);
+  const pageField = new StubElement("input");
+  pageField.closest = () => null;
+  document.activeElement = pageField;
+  AssistantMount.defaultConsent = () => {
+    document.provide("#ns-msgs .ns-consent", [box]);
+    return Promise.resolve("decline");
+  };
+  assert.equal(await AssistantMount.consent({ kind: "network" }), "decline");
+  assert.notEqual(messageBox.focused, true, "the visitor's place on the page is kept");
+  document.activeElement = null;
+});
+
+// Task 10a. The runtime's agent list ("Agents working for you") opens a dialog with each
+// agent's instructions, on a mouse click only. site.js makes it work from the keyboard.
+test("each entry in the agent list is a button that Enter and Space open, named for what it shows", async () => {
+  const { StubElement } = await import("../vendor/agentify-website/templates/tests/stub_element.mjs");
+  const entry = new StubElement("div");
+  const name = new StubElement("div");
+  name.textContent = "Trial Finder";
+  entry.provide(".ns-aname", [name]);
+  let clicks = 0;
+  entry.click = () => { clicks += 1; };
+  AssistantMount.agentButton(entry);
+  AssistantMount.agentButton(entry);
+  assert.equal(entry.getAttribute("role"), "button");
+  assert.equal(entry.tabIndex, 0, "it is in the Tab order");
+  assert.equal(entry.getAttribute("aria-label"), "Trial Finder: show its instructions and what it did");
+  assert.equal(entry.handlers.keydown.length, 1, "set up once, however often the runtime redraws");
+  entry.dispatch("keydown", { key: "Enter" });
+  entry.dispatch("keydown", { key: " " });
+  entry.dispatch("keydown", { key: "a" });
+  assert.equal(clicks, 2, "Enter and Space open it; other keys do nothing");
+  assert.equal(AssistantMount.dialogOpener, "Trial Finder", "the page remembers which entry opened the dialog");
+});
+
+test("the agent dialog takes focus, keeps Tab inside, closes with Escape, and hands focus back", async () => {
+  const { StubElement } = await import("../vendor/agentify-website/templates/tests/stub_element.mjs");
+  const modal = new StubElement("div");
+  const card = new StubElement("div");
+  const title = new StubElement("h4");
+  title.textContent = "🔬 Trial Finder";
+  const close = new StubElement("button");
+  let closed = 0;
+  close.click = () => { closed += 1; };
+  card.provide("h4", [title]);
+  card.provide(".ns-modal-close", [close]);
+  modal.provide("#ns-modal-card", [card]);
+  modal.provide(".ns-modal-close", [close]);
+
+  AssistantMount.dialogShown(modal);
+  assert.equal(card.getAttribute("role"), "dialog");
+  assert.equal(card.getAttribute("aria-modal"), "true");
+  assert.equal(card.getAttribute("aria-label"), "🔬 Trial Finder");
+  assert.equal(card.tabIndex, 0, "the instructions can be scrolled from the keyboard");
+  assert.equal(close.getAttribute("aria-label"), "Close");
+  assert.equal(close.focused, true, "focus moves into the dialog");
+
+  document.activeElement = close;
+  let prevented = false;
+  AssistantMount.dialogKeys(modal, { key: "Tab", shiftKey: false, preventDefault: () => { prevented = true; } });
+  assert.equal(card.focused, true, "Tab stays in the dialog");
+  assert.equal(prevented, true);
+  AssistantMount.dialogKeys(modal, { key: "Escape", preventDefault: () => {} });
+  assert.equal(closed, 1, "Escape presses the dialog's own close button");
+
+  const other = new StubElement("div");
+  const otherName = new StubElement("div");
+  otherName.textContent = "Fernhollow Asthma Friends";
+  other.provide(".ns-aname", [otherName]);
+  const opener = new StubElement("div");
+  const openerName = new StubElement("div");
+  openerName.textContent = "Trial Finder";
+  opener.provide(".ns-aname", [openerName]);
+  document.provide("#ns-anodes .ns-anode", [other, opener]);
+  AssistantMount.dialogOpener = "Trial Finder";
+  AssistantMount.dialogHidden();
+  assert.equal(opener.focused, true, "focus goes back to the entry that opened it, even after a redraw");
+  assert.notEqual(other.focused, true);
+  document.activeElement = null;
+});
+
 test("a visitor typing in the page's own form keeps focus when a consent card appears", async () => {
   const { StubElement } = await import("../vendor/agentify-website/templates/tests/stub_element.mjs");
   const box = new StubElement("div");

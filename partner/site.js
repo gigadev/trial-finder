@@ -43,6 +43,7 @@ export class AssistantMount {
       try {
         AssistantMount.quietChatBox();
         AssistantMount.multilineChat();
+        AssistantMount.keyboardAgents();
       } catch {
         // Nothing to do: the runtime's own chat box stays in place.
       }
@@ -65,32 +66,43 @@ export class AssistantMount {
  */
 AssistantMount.consent = async (info) => {
   const answer = AssistantMount.defaultConsent(info);
-  AssistantMount.focusConsentCard();
+  const card = AssistantMount.focusConsentCard();
   const decision = await answer;
-  AssistantMount.keepFocusInChat();
+  AssistantMount.keepFocusInChat(card);
   return decision;
 };
 
 /**
  * Name the newest consent card after its title, and move focus to that title, unless
  * the visitor is typing in the page's own form: they keep focus and their keystrokes.
+ *
+ * :return: The card, or null when there is none.
  */
 AssistantMount.focusConsentCard = () => {
   const cards = document.querySelectorAll("#ns-msgs .ns-consent");
   const card = cards[cards.length - 1];
   const title = card ? card.querySelector(".ns-consent-title") : null;
-  if (!title) return;
+  if (!title) return null;
   card.setAttribute("role", "group");
   card.setAttribute("aria-label", title.textContent);
   const active = document.activeElement;
-  if (active && active !== document.body && !active.closest("#agent-app")) return;
+  if (active && active !== document.body && !active.closest("#agent-app")) return card;
   title.tabIndex = -1;
   title.focus();
+  return card;
 };
 
-/** Put focus back in the message box when an answered card left it on the page body. */
-AssistantMount.keepFocusInChat = () => {
-  if (document.activeElement === document.body || document.activeElement === null) {
+/**
+ * Put focus back in the message box once the card is answered, when focus was left on
+ * the page body or is still on the card. A tap, or a click in a browser that does not
+ * focus buttons, answers the card with focus still on its title. Focus anywhere else
+ * is the visitor's and stays.
+ *
+ * :param card: The answered card, or null.
+ */
+AssistantMount.keepFocusInChat = (card = null) => {
+  const active = document.activeElement;
+  if (active === document.body || active === null || (card && card.contains(active))) {
     (document.querySelector("#assistant-message") ?? document.querySelector("#ns-input"))?.focus();
   }
 };
@@ -177,6 +189,103 @@ AssistantMount.multilineChat = () => {
     }).observe(box, { attributes: true, attributeFilter: ["placeholder", "disabled"] });
   }
   return area;
+};
+
+/**
+ * Make one entry in the runtime's agent list work from the keyboard. The runtime draws
+ * each entry as a box that opens a dialog with that agent's instructions on a click;
+ * this makes it a button in the Tab order that Enter and Space open, and remembers which
+ * entry opened the dialog so focus can go back to it. Safe to call again on an entry.
+ *
+ * :param entry: One .ns-anode element.
+ * :return: The same element.
+ */
+AssistantMount.agentButton = (entry) => {
+  if (entry.getAttribute("role") === "button") return entry;
+  const name = entry.querySelector(".ns-aname")?.textContent?.trim() || "This agent";
+  entry.setAttribute("role", "button");
+  entry.tabIndex = 0;
+  entry.setAttribute("aria-label", `${name}: show its instructions and what it did`);
+  entry.addEventListener("click", () => { AssistantMount.dialogOpener = name; });
+  entry.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    AssistantMount.dialogOpener = name;
+    entry.click();
+  });
+  return entry;
+};
+
+/** The name of the agent-list entry that last opened the dialog. */
+AssistantMount.dialogOpener = null;
+
+/**
+ * When the runtime shows its agent dialog: name it, mark it as a dialog, and move focus
+ * to its close button. The card can take focus too, so the instructions can be scrolled
+ * with the arrow keys.
+ *
+ * :param modal: The runtime's #ns-modal element.
+ */
+AssistantMount.dialogShown = (modal) => {
+  const card = modal.querySelector("#ns-modal-card");
+  const close = card?.querySelector(".ns-modal-close");
+  if (!card || !close) return;
+  card.setAttribute("role", "dialog");
+  card.setAttribute("aria-modal", "true");
+  const title = card.querySelector("h4")?.textContent?.trim();
+  if (title) card.setAttribute("aria-label", title);
+  card.tabIndex = 0;
+  close.setAttribute("aria-label", "Close");
+  close.focus();
+};
+
+/**
+ * Keys in the open agent dialog: Escape presses its own close button, and Tab moves
+ * between the close button and the instructions without leaving the dialog.
+ *
+ * :param modal: The runtime's #ns-modal element.
+ * :param event: The keydown event.
+ */
+AssistantMount.dialogKeys = (modal, event) => {
+  const card = modal.querySelector("#ns-modal-card");
+  const close = modal.querySelector(".ns-modal-close");
+  if (!card || !close) return;
+  if (event.key === "Escape") {
+    event.preventDefault();
+    close.click();
+  } else if (event.key === "Tab") {
+    event.preventDefault();
+    (document.activeElement === close ? card : close).focus();
+  }
+};
+
+/** When the dialog closes: focus goes back to the entry that opened it, or to the chat. */
+AssistantMount.dialogHidden = () => {
+  const entries = [...document.querySelectorAll("#ns-anodes .ns-anode")];
+  const opener = entries.find((entry) => entry.querySelector(".ns-aname")?.textContent?.trim() === AssistantMount.dialogOpener);
+  (opener ?? document.querySelector("#assistant-message"))?.focus();
+};
+
+/**
+ * Watch the runtime's agent list and dialog, and apply the keyboard support above. The
+ * runtime redraws the list as agents work, so each new entry is set up as it appears.
+ */
+AssistantMount.keyboardAgents = () => {
+  const list = document.querySelector("#ns-anodes");
+  const modal = document.querySelector("#ns-modal");
+  if (typeof MutationObserver !== "function") return;
+  if (list) {
+    const setUp = () => { list.querySelectorAll(".ns-anode").forEach(AssistantMount.agentButton); };
+    setUp();
+    new MutationObserver(setUp).observe(list, { childList: true });
+  }
+  if (modal) {
+    modal.addEventListener("keydown", (event) => { AssistantMount.dialogKeys(modal, event); });
+    new MutationObserver(() => {
+      if (modal.hidden) AssistantMount.dialogHidden();
+      else AssistantMount.dialogShown(modal);
+    }).observe(modal, { attributes: true, attributeFilter: ["hidden"] });
+  }
 };
 
 // Boot only in a browser. Node tests import this file to check it.

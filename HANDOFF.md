@@ -30,7 +30,7 @@ A new session starts here. Sections 1 to 12 were written before the build; they 
 
 **The numbers a change must respect:**
 
-- 184 tests. Run them with `node --test "tests/*.test.mjs"` (or `npm test`). **A bare `node --test` also picks up a template test inside `vendor/` and fails; that is not our failure.**
+- 212 tests (after 10a). Run them with `node --test "tests/*.test.mjs"` (or `npm test`). **A bare `node --test` also picks up a template test inside `vendor/` and fails; that is not our failure.**
 - Instructions: Trial Finder version 0.8.0, **4,997 of 5,000 characters used on the front agent**. There is room for three more characters. Any new line means removing one. Fernhollow is version 0.2.0, 3,432 characters.
 - A change to a `.hocon` file means: rebuild with `build_network.mjs`, raise the version, update the version in `site/index.html`'s footer, and **run the eval again before it ships** (standards C11, D11). Scott runs the eval; it needs his key. So change the instructions only when a finding needs it, and batch such changes.
 - Runtime limits: 24 agent calls and 90 seconds per visitor message, 4 partner calls, 1 per partner.

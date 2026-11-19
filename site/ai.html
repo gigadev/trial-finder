@@ -81,12 +81,12 @@
       <ul>
         <li>Saved setups, key included, in this site's local storage, until you delete them.</li>
         <li>The setup in use, also in this tab's session storage, until the tab is closed.</li>
-        <li>When the site runs on your own computer for testing (an address starting with localhost or 127.0.0.1), the runtime also copies saved setups into a cookie for 180 days, which other pages on that computer's local addresses can read. Use a key with a low spending limit for testing.</li>
+        <li>When the site runs on your own computer for testing (an address starting with localhost or 127.0.0.1), the runtime also copies saved setups into a cookie for 180 days. Other pages on that computer's local addresses can read it. Use a key with a low spending limit for testing.</li>
       </ul>
       <p>To remove it, do both: open AI model settings, then Advanced settings, and choose Delete setup; then close the tab. Delete setup removes the saved copy only. The copy in use stays in the open tab, and the assistant keeps working with it, until you close that tab. Your key is sent only to the AI provider you chose.</p>
 
       <h2>Which AI providers work here</h2>
-      <p>To keep the page from talking to anywhere it should not, the site tells your browser exactly which addresses it may contact. For AI providers, those are the ones in the settings panel (Otari, Google AI Studio, Groq, OpenAI and Anthropic), OpenRouter, and a model running on your own computer at an address starting with localhost or 127.0.0.1. Any other provider address you type in the advanced settings will be blocked by your browser.</p>
+      <p>To keep the page from talking to anywhere it should not, the site tells your browser exactly which addresses it may contact. For AI providers, those are the ones in the settings panel (Otari, Google AI Studio, Groq, OpenAI and Anthropic), OpenRouter, and a model running on your own computer. That last one means an address starting with localhost or 127.0.0.1. Any other provider address you type in the advanced settings will be blocked by your browser.</p>
 
       <h2>The assistant's two helpers</h2>
       <ul>
@@ -97,7 +97,7 @@
 
       <h2>Asking another site, and being asked</h2>
       <p>The assistant can ask Fernhollow Asthma Friends, an invented support group made for this demonstration, about support for daily life. Before it does, a card shows the site's name and the start of the question, and nothing happens until you choose. "Always allow" skips the card for that site until you reload the page.</p>
-      <p>Other sites' assistants can ask Trial Finder too. When they do, Trial Finder's assistant runs in their visitor's browser without this page's tools: it can say what Trial Finder offers and where to find it, but it cannot search for them.</p>
+      <p>Other sites' assistants can ask Trial Finder too. When they do, Trial Finder's assistant runs in their visitor's browser without this page's tools. It can say what Trial Finder offers and where to find it, but it cannot search for them.</p>
 
       <h2>What the code checks</h2>
       <p>Some rules must always hold, so they are checked by the page's own code, whatever the AI writes:</p>
@@ -113,13 +113,13 @@
 
       <h2>What the code cannot check</h2>
       <ul>
-        <li><strong>The assistant's own words in the chat are written by the AI.</strong> The code cannot stop it saying something wrong there. The cards, the study details and the rules in the study's own words on the page come from the record; when the chat and the page differ, trust the page, and ask the study team.</li>
+        <li><strong>The assistant's own words in the chat are written by the AI.</strong> The code cannot stop it saying something wrong there. The cards, the study details and the rules in the study's own words on the page come from the record. When the chat and the page differ, trust the page, and ask the study team.</li>
         <li><strong>The assistant changes the page without asking first:</strong> it can search, open a study, change your shortlist, add notes and make your sheet. You can see each change and undo it on the page. It cannot print; printing is your own button.</li>
         <li>AI can be wrong, and so can a record. Only the study team can say whether you can take part.</li>
       </ul>
 
       <h2>Seeing what it did</h2>
-      <p>Above the chat, "Agents working for you" shows which part of the assistant is working. The Developer button shows a log of every step: which helper ran, which tool it used, and what came back. It never shows your key.</p>
+      <p>Above the chat, "Agents working for you" shows which part of the assistant is working. Select one, with a click or the Enter key, to read its instructions and what it did. The Developer button shows a log of every step: which helper ran, which tool it used, and what came back. It never shows your key.</p>
     </article>
   </main>
 

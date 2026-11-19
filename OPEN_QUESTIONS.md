@@ -613,6 +613,7 @@ Settled while building:
 - **Seen, not fixed (task 10):** after a consent card is answered, focus stays on the
   card's title instead of returning to the message box. The skill's template behaves
   the same way in a real browser, where the answered card stays on the page.
+  Fixed in task 10a (B22).
 - **CI** now builds both networks and runs `check_partner.mjs` both ways against both
   sites served in the background. Not run yet: it runs when Scott pushes.
 
@@ -708,6 +709,45 @@ Settled while building:
   makes the rule stricter about what is shown, not looser about what is accepted (B8).
 - **One run per model.** Models do not answer the same way each time, so each score is a
   single sample.
+
+### B22. Task 10a: polish and accessibility, what was settled
+
+- **No instruction changed.** Neither `.hocon` file was touched, so no version changed
+  and the eval needs no re-run (HANDOFF §13, task 10).
+- **Consent card focus (B18, "Seen, not fixed"): fixed in our own `site.js`,** both
+  sites. The cause: a tap, or a click in a browser that does not focus buttons, answers
+  the card while focus is still on its title, and the old code moved focus only when it
+  had fallen to the page body. Focus now leaves the answered card for the message box;
+  focus anywhere else on the page is left alone. The keyboard path already worked.
+- **The agent list and its dialog now work from the keyboard,** from `site.js`, without
+  editing the runtime: each entry is a button in the Tab order (Enter or Space opens
+  it), the dialog takes focus, Tab stays inside it, Escape closes it, and focus goes back
+  to the entry. Before, they opened on a mouse click only.
+- **Tap size:** every control is at least 24 by 24 CSS pixels, and 44 tall where there is
+  room, the runtime's controls included (set from our style sheet). Links inside a
+  sentence are left as text, as WCAG 2.5.8 allows.
+- **Chat height:** at most 560 px and no taller than 75% of the screen, at least 20rem.
+  The runtime's own 480 px floor is lifted from our style sheet.
+- **Contrast was worked out, not judged by eye,** on the live page with every state open
+  (cards, notes, the consent card, settings) and in `tests/accessibility.test.mjs`. The
+  lowest text is 4.8:1 (the runtime's Decline). One fault: the runtime's Decline border
+  was 2.1:1; our sheet sets it to 4.8:1. The focus ring is 5.0:1 or more on every
+  background a control sits on.
+- **Print (B14) was looked at for the first time,** as PDFs at A4 and Letter from Edge.
+  Each study was set to never break, so a study longer than a page left the page before
+  it nearly empty (7 pages, two almost blank). Studies may now break; their smaller
+  parts keep together. The link printed as "(new tab)" with no address, so the printed
+  sheet now gives the record's address in full. Now 5 pages for two long studies,
+  nothing cut off, chat and menus hidden, source and dates present.
+- **Small fixes found on the way:** "1 studies are shown" now reads "1 study is shown";
+  closing a study's details opened by the assistant, with no results showing, sent focus
+  to a hidden heading (now the assistant's); the notes table's header cells name their
+  columns, and on a phone each cell shows its column's name; Fernhollow's page had no
+  `h1` (its name is now one); motion stops for visitors who ask for less of it.
+- **Words:** the longest sentences on `ai.html` and `data.html` were split. The fixed
+  lines and every tested phrase are unchanged.
+- **Not checked by the builder:** a real phone, a real screen reader, and printing on
+  paper. They are in Scott's phone list in the task report.
 
 ---
 
