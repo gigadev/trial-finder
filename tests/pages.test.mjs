@@ -98,6 +98,8 @@ test("D2: the AI page says exactly where the runtime keeps the key, and how to r
     "in this tab's session storage",
     "a cookie for 180 days",
     "Delete setup",
+    // Scott's test, Nov 19, 2026: after Delete setup the open tab still used the key.
+    "Delete setup removes the saved copy only. The copy in use stays in the open tab, and the assistant keeps working with it, until you close that tab.",
     "Your key is sent only to the AI provider you chose.",
     // The page's security policy allows only these providers (task 8, decision 3).
     "those are the ones in the settings panel (Otari, Google AI Studio, Groq, OpenAI and Anthropic), OpenRouter, and a model running on your own computer",
